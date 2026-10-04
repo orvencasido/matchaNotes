@@ -30,13 +30,12 @@ export const VaultCard: React.FC<VaultCardProps> = ({ item, onEdit, onDelete }) 
     listeners,
     setNodeRef,
     transform,
-    transition,
     isDragging,
   } = useSortable({ id: item.id })
 
   const style: React.CSSProperties = {
     transform: CSS.Transform.toString(transform),
-    transition,
+    transition: undefined,
   }
 
   const [showPassword, setShowPassword] = useState(false)
@@ -153,7 +152,7 @@ export const VaultCard: React.FC<VaultCardProps> = ({ item, onEdit, onDelete }) 
     <div
       ref={setNodeRef}
       style={style}
-      className={`group relative flex flex-col justify-between p-4 rounded-2xl bg-[#F4F3EE] hover:bg-[#ECEAE3]/70 border border-[#E4E3DC] transition-all hover:shadow-xs ${
+      className={`group relative flex flex-col justify-between p-4 rounded-2xl bg-[#F4F3EE] hover:bg-[#ECEAE3]/70 border border-[#E4E3DC] hover:shadow-xs transition-colors duration-150 ${
         isDragging
           ? 'z-30 shadow-md ring-1 ring-[#2D4739]/30 bg-[#F4F3EE] opacity-90 scale-[1.01]'
           : ''

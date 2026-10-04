@@ -53,13 +53,12 @@ const SortableTodoItem: React.FC<SortableTodoItemProps> = ({
     listeners,
     setNodeRef,
     transform,
-    transition,
     isDragging,
   } = useSortable({ id: note.id })
 
   const style: React.CSSProperties = {
     transform: CSS.Transform.toString(transform),
-    transition,
+    transition: undefined,
   }
 
   const completed = isCompleted(note)
@@ -69,7 +68,7 @@ const SortableTodoItem: React.FC<SortableTodoItemProps> = ({
     <div
       ref={setNodeRef}
       style={style}
-      className={`flex items-center gap-2.5 sm:gap-3 p-3.5 hover:bg-[#F4F3EE]/50 transition group select-none ${
+      className={`flex items-center gap-2.5 sm:gap-3 p-3.5 hover:bg-[#F4F3EE]/50 group select-none ${
         isDragging
           ? 'z-30 shadow-md ring-1 ring-[#2D4739]/30 bg-[#F4F3EE] opacity-90 scale-[1.01] rounded-lg'
           : ''
@@ -157,12 +156,12 @@ export const TodosView: React.FC = () => {
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
-        distance: 5,
+        distance: 1,
       },
     }),
     useSensor(TouchSensor, {
       activationConstraint: {
-        delay: 200,
+        delay: 50,
         tolerance: 5,
       },
     }),

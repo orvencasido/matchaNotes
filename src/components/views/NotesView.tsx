@@ -70,13 +70,12 @@ const SortableNoteItem: React.FC<SortableNoteItemProps> = ({
     listeners,
     setNodeRef,
     transform,
-    transition,
     isDragging,
   } = useSortable({ id: note.id })
 
   const style: React.CSSProperties = {
     transform: CSS.Transform.toString(transform),
-    transition,
+    transition: undefined,
   }
 
   const preview = getCleanPreview(note.content)
@@ -85,7 +84,7 @@ const SortableNoteItem: React.FC<SortableNoteItemProps> = ({
     <div
       ref={setNodeRef}
       style={style}
-      className={`group relative transition-all ${
+      className={`group relative ${
         isDragging
           ? 'z-30 shadow-md ring-1 ring-[#2D4739]/30 bg-[#F4F3EE] opacity-90 scale-[1.01]'
           : ''
@@ -101,7 +100,7 @@ const SortableNoteItem: React.FC<SortableNoteItemProps> = ({
             onSelect(note)
           }
         }}
-        className={`w-full text-left p-3.5 sm:p-4 transition-colors cursor-pointer block relative ${
+        className={`w-full text-left p-3.5 sm:p-4 transition-colors duration-150 cursor-pointer block relative ${
           isSelected
             ? 'bg-[#F4F3EE]'
             : 'hover:bg-[#F4F3EE]/60 bg-[#FBFBF9]'
@@ -186,12 +185,12 @@ export const NotesView: React.FC = () => {
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
-        distance: 5,
+        distance: 1,
       },
     }),
     useSensor(TouchSensor, {
       activationConstraint: {
-        delay: 200,
+        delay: 50,
         tolerance: 5,
       },
     }),

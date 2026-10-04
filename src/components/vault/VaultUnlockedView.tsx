@@ -62,12 +62,12 @@ export const VaultUnlockedView: React.FC = () => {
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
-        distance: 5,
+        distance: 1,
       },
     }),
     useSensor(TouchSensor, {
       activationConstraint: {
-        delay: 200,
+        delay: 50,
         tolerance: 5,
       },
     }),
