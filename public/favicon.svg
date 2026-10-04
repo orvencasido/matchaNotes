@@ -1,0 +1,51 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="matchaBg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#345343" />
+      <stop offset="100%" stop-color="#23392D" />
+    </linearGradient>
+    <linearGradient id="leafGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#A8D5B5" />
+      <stop offset="100%" stop-color="#6DA37F" />
+    </linearGradient>
+  </defs>
+
+  <!-- Base Squircle -->
+  <rect width="512" height="512" rx="112" fill="url(#matchaBg)" />
+
+  <!-- Subtle Inner Border Highlight -->
+  <rect x="6" y="6" width="500" height="500" rx="106" fill="none" stroke="#4E6E58" stroke-width="4" stroke-opacity="0.4" />
+
+  <!-- Organic Tea Leaf Floating Accent -->
+  <path
+    d="M 320 120 C 370 120 400 155 395 205 C 345 205 315 170 320 120 Z"
+    fill="url(#leafGrad)"
+    opacity="0.9"
+  />
+  <path
+    d="M 320 120 C 350 155 385 185 395 205"
+    fill="none"
+    stroke="#2D4739"
+    stroke-width="3"
+    stroke-linecap="round"
+    opacity="0.6"
+  />
+
+  <!-- Stylized Serif Monogram 'M' -->
+  <g fill="#FBFBF9">
+    <!-- Left Stem -->
+    <rect x="120" y="170" width="38" height="200" rx="10" />
+    <!-- Right Stem -->
+    <rect x="354" y="170" width="38" height="200" rx="10" />
+    <!-- Diagonal Left-to-Center -->
+    <path
+      d="M 148 170 L 256 310 L 276 310 L 176 170 Z"
+    />
+    <!-- Diagonal Center-to-Right -->
+    <path
+      d="M 364 170 L 256 310 L 236 310 L 336 170 Z"
+    />
+    <!-- Center Apex Pin -->
+    <circle cx="256" cy="305" r="16" />
+  </g>
+</svg>
