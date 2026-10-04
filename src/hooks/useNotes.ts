@@ -1,17 +1,12 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
+import { arrayMove } from '@dnd-kit/sortable'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from './useAuth'
-import type { Note, NoteInsert, NoteUpdate } from '@/types'
+import type { Note, NoteInsert, NoteUpdate, CreateNoteInput } from '@/types'
 
 export type SaveStatus = 'idle' | 'saving' | 'saved' | 'error'
 
-export interface CreateNoteInput {
-  title?: string
-  content?: string
-  category?: string
-  tags?: string[]
-  is_pinned?: boolean
-}
+export type { CreateNoteInput }
 
 export interface UseNotesReturn {
   notes: Note[]
@@ -24,6 +19,7 @@ export interface UseNotesReturn {
   flushPendingSave: () => Promise<void>
   deleteNote: (id: string) => Promise<boolean>
   togglePin: (id: string) => Promise<boolean>
+  reorderNotes: (activeId: string, overId: string, currentList?: Note[]) => Promise<boolean>
   refetchNotes: () => Promise<void>
 }
 
@@ -47,6 +43,12 @@ export function useNotes(): UseNotesReturn {
       if (a.is_pinned !== b.is_pinned) {
         return a.is_pinned ? -1 : 1
       }
+      // Then sort_order ascending (nulls last)
+      const orderA = a.sort_order ?? Infinity
+      const orderB = b.sort_order ?? Infinity
+      if (orderA !== orderB) {
+        return orderA - orderB
+      }
       // Then newest updated_at
       const dateA = new Date(a.updated_at).getTime()
       const dateB = new Date(b.updated_at).getTime()
@@ -69,6 +71,7 @@ export function useNotes(): UseNotesReturn {
         .from('notes')
         .select('*')
         .order('is_pinned', { ascending: false })
+        .order('sort_order', { ascending: true, nullsFirst: false })
         .order('updated_at', { ascending: false })
 
       if (fetchErr) {
@@ -100,6 +103,7 @@ export function useNotes(): UseNotesReturn {
           .from('notes')
           .select('*')
           .order('is_pinned', { ascending: false })
+          .order('sort_order', { ascending: true, nullsFirst: false })
           .order('updated_at', { ascending: false })
 
         if (!ignore) {
@@ -186,6 +190,7 @@ export function useNotes(): UseNotesReturn {
           category: input?.category ?? 'General',
           is_pinned: input?.is_pinned ?? false,
           tags: input?.tags ?? [],
+          sort_order: input?.sort_order ?? null,
         }
 
         const { data, error: insertErr } = await supabase
@@ -311,6 +316,70 @@ export function useNotes(): UseNotesReturn {
     [notes, updateNote]
   )
 
+  // Reorder Notes with fractional indexing
+  const reorderNotes = useCallback(
+    async (activeId: string, overId: string, currentList?: Note[]): Promise<boolean> => {
+      if (!user) return false
+      if (activeId === overId) return true
+
+      const list = currentList && currentList.length > 0 ? currentList : notes
+      const oldIndex = list.findIndex((n) => n.id === activeId)
+      const newIndex = list.findIndex((n) => n.id === overId)
+      if (oldIndex === -1 || newIndex === -1 || oldIndex === newIndex) return false
+
+      const reordered = arrayMove(list, oldIndex, newIndex)
+      const prevItem = newIndex > 0 ? reordered[newIndex - 1] : null
+      const nextItem = newIndex < reordered.length - 1 ? reordered[newIndex + 1] : null
+
+      let calculatedSortOrder: number
+      if (!prevItem && nextItem) {
+        // Moved to start: nextItem.sort_order - 100
+        const nextOrder = typeof nextItem.sort_order === 'number' ? nextItem.sort_order : 1000
+        calculatedSortOrder = nextOrder - 100
+      } else if (prevItem && !nextItem) {
+        // Moved to end: prevItem.sort_order + 100
+        const prevOrder = typeof prevItem.sort_order === 'number' ? prevItem.sort_order : 1000
+        calculatedSortOrder = prevOrder + 100
+      } else if (prevItem && nextItem) {
+        // Moved between prev and next: (prev.sort_order + next.sort_order) / 2
+        const prevOrder = typeof prevItem.sort_order === 'number' ? prevItem.sort_order : 1000
+        let nextOrder = typeof nextItem.sort_order === 'number' ? nextItem.sort_order : prevOrder + 200
+        if (nextOrder <= prevOrder) {
+          nextOrder = prevOrder + 200
+        }
+        calculatedSortOrder = (prevOrder + nextOrder) / 2
+      } else {
+        calculatedSortOrder = 1000
+      }
+
+      // Optimistic UI reordering
+      setNotes((prev) => {
+        const updated = prev.map((n) =>
+          n.id === activeId ? { ...n, sort_order: calculatedSortOrder } : n
+        )
+        return sortNotes(updated)
+      })
+
+      try {
+        const { error: updateErr } = await supabase
+          .from('notes')
+          .update({ sort_order: calculatedSortOrder })
+          .eq('id', activeId)
+          .eq('user_id', user.id)
+
+        if (updateErr) throw updateErr
+        return true
+      } catch (err: unknown) {
+        console.error('Failed to reorder note:', err)
+        const msg = err instanceof Error ? err.message : 'Failed to reorder note'
+        setError(msg)
+        fetchNotes()
+        return false
+      }
+    },
+    [user, notes, fetchNotes]
+  )
+
   // Delete Note
   const deleteNote = useCallback(
     async (id: string): Promise<boolean> => {
@@ -365,6 +434,7 @@ export function useNotes(): UseNotesReturn {
     flushPendingSave,
     deleteNote,
     togglePin,
+    reorderNotes,
     refetchNotes: fetchNotes,
   }
 }

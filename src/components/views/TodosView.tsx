@@ -1,4 +1,21 @@
-import React, { useState, useMemo, useRef } from 'react'
+import React, { useState, useMemo, useRef, useCallback } from 'react'
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  TouchSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from '@dnd-kit/core'
+import {
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+  useSortable,
+} from '@dnd-kit/sortable'
+import { CSS } from '@dnd-kit/utilities'
 import {
   Plus,
   Check,
@@ -6,11 +23,119 @@ import {
   Loader2,
   CheckCircle2,
   Circle,
+  GripVertical,
 } from 'lucide-react'
 import { useNotes } from '@/hooks/useNotes'
 import type { Note } from '@/types'
 
 type TodoFilter = 'all' | 'pending' | 'completed'
+
+// Helper to determine if a note is marked as completed
+const isCompleted = (note: Note): boolean => {
+  if (note.tags?.includes('completed')) return true
+  if (note.content.startsWith('- [x]') || note.content === '[x]') return true
+  return false
+}
+
+interface SortableTodoItemProps {
+  note: Note
+  onToggle: (note: Note) => void
+  onDelete: (id: string) => void
+}
+
+const SortableTodoItem: React.FC<SortableTodoItemProps> = ({
+  note,
+  onToggle,
+  onDelete,
+}) => {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: note.id })
+
+  const style: React.CSSProperties = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+  }
+
+  const completed = isCompleted(note)
+  const displayTags = (note.tags || []).filter((t) => t !== 'completed')
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={`flex items-center gap-2.5 sm:gap-3 p-3.5 hover:bg-[#F4F3EE]/50 transition group select-none ${
+        isDragging
+          ? 'z-30 shadow-md ring-1 ring-[#2D4739]/30 bg-[#F4F3EE] opacity-90 scale-[1.01] rounded-lg'
+          : ''
+      }`}
+    >
+      {/* Drag Handle on the left */}
+      <button
+        type="button"
+        {...attributes}
+        {...listeners}
+        aria-label="Drag to reorder task"
+        className="p-0.5 text-[#8A968F] opacity-40 sm:opacity-0 group-hover:opacity-70 hover:opacity-100 hover:text-[#2D4739] transition-opacity cursor-grab active:cursor-grabbing touch-none shrink-0"
+      >
+        <GripVertical className="w-3.5 h-3.5" />
+      </button>
+
+      {/* Checkbox */}
+      <button
+        type="button"
+        onClick={() => onToggle(note)}
+        className={`w-4 h-4 rounded border flex items-center justify-center transition-all shrink-0 cursor-pointer ${
+          completed
+            ? 'bg-[#2D4739] border-[#2D4739] text-[#FBFBF9]'
+            : 'border-[#5C6861]/40 bg-[#FBFBF9] hover:border-[#2D4739]'
+        }`}
+        aria-label={completed ? 'Mark task incomplete' : 'Mark task complete'}
+      >
+        {completed && <Check className="w-3 h-3 stroke-[2.5]" />}
+      </button>
+
+      {/* Task Title */}
+      <span
+        onClick={() => onToggle(note)}
+        className={`flex-1 text-xs sm:text-sm leading-relaxed cursor-pointer transition-colors ${
+          completed
+            ? 'line-through text-[#8A968F]'
+            : 'text-[#19221C]'
+        }`}
+      >
+        {note.title}
+      </span>
+
+      {/* Tags */}
+      <div className="flex items-center gap-1.5 shrink-0">
+        {displayTags.map((tag) => (
+          <span
+            key={tag}
+            className="text-[10px] font-mono px-2 py-0.5 rounded bg-[#E8EFE8] text-[#23392D]"
+          >
+            #{tag}
+          </span>
+        ))}
+
+        {/* Delete Button */}
+        <button
+          type="button"
+          onClick={() => onDelete(note.id)}
+          title="Delete task"
+          className="p-1 rounded text-[#8A968F] hover:text-rose-600 hover:bg-rose-50 opacity-80 sm:opacity-0 group-hover:opacity-100 transition-all cursor-pointer"
+        >
+          <Trash2 className="w-3.5 h-3.5" />
+        </button>
+      </div>
+    </div>
+  )
+}
 
 export const TodosView: React.FC = () => {
   const {
@@ -19,6 +144,7 @@ export const TodosView: React.FC = () => {
     createNote,
     updateNote,
     deleteNote,
+    reorderNotes,
   } = useNotes()
 
   const [todoFilter, setTodoFilter] = useState<TodoFilter>('all')
@@ -27,6 +153,23 @@ export const TodosView: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   const inputRef = useRef<HTMLInputElement>(null)
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 5,
+      },
+    }),
+    useSensor(TouchSensor, {
+      activationConstraint: {
+        delay: 200,
+        tolerance: 5,
+      },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  )
 
   // Extract todos: notes that have category === 'To-Do' OR tags include 'todo'
   const todoNotes = useMemo(() => {
@@ -38,13 +181,6 @@ export const TodosView: React.FC = () => {
       return isTodoCategory || hasTodoTag
     })
   }, [notes])
-
-  // Helper to determine if a note is marked as completed
-  const isCompleted = (note: Note): boolean => {
-    if (note.tags?.includes('completed')) return true
-    if (note.content.startsWith('- [x]') || note.content === '[x]') return true
-    return false
-  }
 
   // Handle toggling complete state
   const handleToggle = async (note: Note) => {
@@ -109,6 +245,15 @@ export const TodosView: React.FC = () => {
   const completedCount = useMemo(
     () => todoNotes.filter((n) => isCompleted(n)).length,
     [todoNotes]
+  )
+
+  const handleDragEnd = useCallback(
+    (event: DragEndEvent) => {
+      const { active, over } = event
+      if (!over || active.id === over.id) return
+      reorderNotes(String(active.id), String(over.id), filteredTodos)
+    },
+    [reorderNotes, filteredTodos]
   )
 
   const TAG_OPTIONS = ['Task', 'Work', 'Personal', 'Ideas', 'Urgent']
@@ -216,7 +361,7 @@ export const TodosView: React.FC = () => {
       </form>
 
       {/* Task List */}
-      <div className="divide-y divide-[#E4E3DC] border border-[#E4E3DC] rounded-xl overflow-hidden bg-[#FBFBF9] shadow-2xs">
+      <div className="border border-[#E4E3DC] rounded-xl overflow-hidden bg-[#FBFBF9] shadow-2xs">
         {isLoading && todoNotes.length === 0 ? (
           <div className="p-8 text-center text-xs text-[#5C6861] flex items-center justify-center gap-2">
             <Loader2 className="w-4 h-4 animate-spin text-[#2D4739]" />
@@ -235,65 +380,27 @@ export const TodosView: React.FC = () => {
             </p>
           </div>
         ) : (
-          filteredTodos.map((note) => {
-            const completed = isCompleted(note)
-            const displayTags = (note.tags || []).filter((t) => t !== 'completed')
-
-            return (
-              <div
-                key={note.id}
-                className="flex items-center gap-3 p-3.5 hover:bg-[#F4F3EE]/50 transition group select-none"
-              >
-                {/* Checkbox */}
-                <button
-                  type="button"
-                  onClick={() => handleToggle(note)}
-                  className={`w-4 h-4 rounded border flex items-center justify-center transition-all shrink-0 cursor-pointer ${
-                    completed
-                      ? 'bg-[#2D4739] border-[#2D4739] text-[#FBFBF9]'
-                      : 'border-[#5C6861]/40 bg-[#FBFBF9] hover:border-[#2D4739]'
-                  }`}
-                  aria-label={completed ? 'Mark task incomplete' : 'Mark task complete'}
-                >
-                  {completed && <Check className="w-3 h-3 stroke-[2.5]" />}
-                </button>
-
-                {/* Task Title */}
-                <span
-                  onClick={() => handleToggle(note)}
-                  className={`flex-1 text-xs sm:text-sm leading-relaxed cursor-pointer transition-colors ${
-                    completed
-                      ? 'line-through text-[#8A968F]'
-                      : 'text-[#19221C]'
-                  }`}
-                >
-                  {note.title}
-                </span>
-
-                {/* Tags */}
-                <div className="flex items-center gap-1.5 shrink-0">
-                  {displayTags.map((tag) => (
-                    <span
-                      key={tag}
-                      className="text-[10px] font-mono px-2 py-0.5 rounded bg-[#E8EFE8] text-[#23392D]"
-                    >
-                      #{tag}
-                    </span>
-                  ))}
-
-                  {/* Delete Button */}
-                  <button
-                    type="button"
-                    onClick={() => deleteNote(note.id)}
-                    title="Delete task"
-                    className="p-1 rounded text-[#8A968F] hover:text-rose-600 hover:bg-rose-50 opacity-80 sm:opacity-0 group-hover:opacity-100 transition-all cursor-pointer"
-                  >
-                    <Trash2 className="w-3.5 h-3.5" />
-                  </button>
-                </div>
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            onDragEnd={handleDragEnd}
+          >
+            <SortableContext
+              items={filteredTodos.map((n) => n.id)}
+              strategy={verticalListSortingStrategy}
+            >
+              <div className="divide-y divide-[#E4E3DC]">
+                {filteredTodos.map((note) => (
+                  <SortableTodoItem
+                    key={note.id}
+                    note={note}
+                    onToggle={handleToggle}
+                    onDelete={deleteNote}
+                  />
+                ))}
               </div>
-            )
-          })
+            </SortableContext>
+          </DndContext>
         )}
       </div>
     </div>

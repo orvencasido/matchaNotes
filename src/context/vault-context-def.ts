@@ -18,6 +18,7 @@ export interface VaultContextType {
   createVaultItem: (data: CreateVaultItemInput) => Promise<DecryptedVaultItem | null>
   updateVaultItem: (id: string, data: UpdateVaultItemInput) => Promise<boolean>
   deleteVaultItem: (id: string) => Promise<boolean>
+  reorderVaultItems: (activeId: string, overId: string, currentList?: DecryptedVaultItem[]) => Promise<boolean>
   refetchItems: () => Promise<void>
   checkVaultConfig: () => Promise<void>
   clearError: () => void

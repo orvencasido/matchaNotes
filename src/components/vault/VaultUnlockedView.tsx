@@ -1,4 +1,19 @@
-import React, { useState, useMemo } from 'react'
+import React, { useState, useMemo, useCallback } from 'react'
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  TouchSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from '@dnd-kit/core'
+import {
+  SortableContext,
+  sortableKeyboardCoordinates,
+  rectSortingStrategy,
+} from '@dnd-kit/sortable'
 import {
   Search,
   Plus,
@@ -30,6 +45,7 @@ export const VaultUnlockedView: React.FC = () => {
     createVaultItem,
     updateVaultItem,
     deleteVaultItem,
+    reorderVaultItems,
     isActionLoading,
     error,
     clearError,
@@ -42,6 +58,23 @@ export const VaultUnlockedView: React.FC = () => {
   const [isItemModalOpen, setIsItemModalOpen] = useState(false)
   const [editingItem, setEditingItem] = useState<DecryptedVaultItem | null>(null)
   const [isGeneratorOpen, setIsGeneratorOpen] = useState(false)
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 5,
+      },
+    }),
+    useSensor(TouchSensor, {
+      activationConstraint: {
+        delay: 200,
+        tolerance: 5,
+      },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  )
 
   // Filter & search logic
   const filteredItems = useMemo(() => {
@@ -128,6 +161,15 @@ export const VaultUnlockedView: React.FC = () => {
   const handleDeleteItem = async (id: string) => {
     await deleteVaultItem(id)
   }
+
+  const handleDragEnd = useCallback(
+    (event: DragEndEvent) => {
+      const { active, over } = event
+      if (!over || active.id === over.id) return
+      reorderVaultItems(String(active.id), String(over.id), filteredItems)
+    },
+    [reorderVaultItems, filteredItems]
+  )
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-[max(1.5rem,calc(1.5rem+env(safe-area-inset-top,0px)))] sm:pt-6 lg:pt-8 pb-6 sm:pb-8 space-y-6">
@@ -264,16 +306,27 @@ export const VaultUnlockedView: React.FC = () => {
 
       {/* Items Grid */}
       {filteredItems.length > 0 ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {filteredItems.map((item) => (
-            <VaultCard
-              key={item.id}
-              item={item}
-              onEdit={handleOpenEdit}
-              onDelete={handleDeleteItem}
-            />
-          ))}
-        </div>
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCenter}
+          onDragEnd={handleDragEnd}
+        >
+          <SortableContext
+            items={filteredItems.map((i) => i.id)}
+            strategy={rectSortingStrategy}
+          >
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {filteredItems.map((item) => (
+                <VaultCard
+                  key={item.id}
+                  item={item}
+                  onEdit={handleOpenEdit}
+                  onDelete={handleDeleteItem}
+                />
+              ))}
+            </div>
+          </SortableContext>
+        </DndContext>
       ) : (
         /* Empty State */
         <div className="flex flex-col items-center justify-center p-12 text-center rounded-2xl bg-[#F4F3EE]/50 border border-dashed border-[#E4E3DC] my-8">

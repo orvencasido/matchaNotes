@@ -1,4 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react'
+import { useSortable } from '@dnd-kit/sortable'
+import { CSS } from '@dnd-kit/utilities'
 import {
   Globe,
   KeyRound,
@@ -12,6 +14,7 @@ import {
   Edit2,
   Trash2,
   Lock,
+  GripVertical,
 } from 'lucide-react'
 import type { DecryptedVaultItem } from '@/types'
 
@@ -22,6 +25,20 @@ export interface VaultCardProps {
 }
 
 export const VaultCard: React.FC<VaultCardProps> = ({ item, onEdit, onDelete }) => {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: item.id })
+
+  const style: React.CSSProperties = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+  }
+
   const [showPassword, setShowPassword] = useState(false)
   const [showCvv, setShowCvv] = useState(false)
   const [showCardNumber, setShowCardNumber] = useState(false)
@@ -133,7 +150,15 @@ export const VaultCard: React.FC<VaultCardProps> = ({ item, onEdit, onDelete }) 
   }
 
   return (
-    <div className="group relative flex flex-col justify-between p-4 rounded-2xl bg-[#F4F3EE] hover:bg-[#ECEAE3]/70 border border-[#E4E3DC] transition-all hover:shadow-xs">
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={`group relative flex flex-col justify-between p-4 rounded-2xl bg-[#F4F3EE] hover:bg-[#ECEAE3]/70 border border-[#E4E3DC] transition-all hover:shadow-xs ${
+        isDragging
+          ? 'z-30 shadow-md ring-1 ring-[#2D4739]/30 bg-[#F4F3EE] opacity-90 scale-[1.01]'
+          : ''
+      }`}
+    >
       {/* Card Header */}
       <div>
         <div className="flex items-start justify-between gap-3 mb-2.5">
@@ -158,6 +183,15 @@ export const VaultCard: React.FC<VaultCardProps> = ({ item, onEdit, onDelete }) 
 
           {/* Quick Action Icons */}
           <div className="flex items-center gap-1 shrink-0 opacity-80 group-hover:opacity-100 transition-opacity">
+            <button
+              type="button"
+              {...attributes}
+              {...listeners}
+              aria-label="Drag to reorder card"
+              className="p-1.5 rounded-lg text-[#8A968F] opacity-40 sm:opacity-0 group-hover:opacity-70 hover:opacity-100 hover:text-[#2D4739] transition-opacity cursor-grab active:cursor-grabbing touch-none"
+            >
+              <GripVertical className="w-3.5 h-3.5" />
+            </button>
             <button
               type="button"
               onClick={() => onEdit(item)}
@@ -330,9 +364,9 @@ export const VaultCard: React.FC<VaultCardProps> = ({ item, onEdit, onDelete }) 
                       title="Copy CVV"
                     >
                       {copiedKey === 'cvv' ? (
-                        <Check className="w-3 h-3 text-[#2D4739]" />
+                        <Check className="w-3.5 h-3.5 text-[#2D4739]" />
                       ) : (
-                        <Copy className="w-3 h-3" />
+                        <Copy className="w-3.5 h-3.5" />
                       )}
                     </button>
                   )}
@@ -353,9 +387,9 @@ export const VaultCard: React.FC<VaultCardProps> = ({ item, onEdit, onDelete }) 
                   title="Copy notes"
                 >
                   {copiedKey === 'notes' ? (
-                    <Check className="w-3 h-3 text-[#2D4739]" />
+                    <Check className="w-3.5 h-3.5 text-[#2D4739]" />
                   ) : (
-                    <Copy className="w-3 h-3" />
+                    <Copy className="w-3.5 h-3.5" />
                   )}
                 </button>
               </div>

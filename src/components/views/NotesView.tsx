@@ -1,5 +1,22 @@
 import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react'
 import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  TouchSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from '@dnd-kit/core'
+import {
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+  useSortable,
+} from '@dnd-kit/sortable'
+import { CSS } from '@dnd-kit/utilities'
+import {
   FileText,
   Pin,
   Clock,
@@ -7,6 +24,7 @@ import {
   Loader2,
   Tag,
   AlertCircle,
+  GripVertical,
 } from 'lucide-react'
 import { useNotes } from '@/hooks/useNotes'
 import { useUI } from '@/hooks/useUI'
@@ -34,6 +52,115 @@ const formatDate = (isoString: string): string => {
   }
 }
 
+interface SortableNoteItemProps {
+  note: Note
+  isSelected: boolean
+  onSelect: (note: Note) => void
+  getCleanPreview: (content: string) => string
+}
+
+const SortableNoteItem: React.FC<SortableNoteItemProps> = ({
+  note,
+  isSelected,
+  onSelect,
+  getCleanPreview,
+}) => {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: note.id })
+
+  const style: React.CSSProperties = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+  }
+
+  const preview = getCleanPreview(note.content)
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={`group relative transition-all ${
+        isDragging
+          ? 'z-30 shadow-md ring-1 ring-[#2D4739]/30 bg-[#F4F3EE] opacity-90 scale-[1.01]'
+          : ''
+      }`}
+    >
+      <div
+        role="button"
+        tabIndex={0}
+        onClick={() => onSelect(note)}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault()
+            onSelect(note)
+          }
+        }}
+        className={`w-full text-left p-3.5 sm:p-4 transition-colors cursor-pointer block relative ${
+          isSelected
+            ? 'bg-[#F4F3EE]'
+            : 'hover:bg-[#F4F3EE]/60 bg-[#FBFBF9]'
+        }`}
+      >
+        {/* Selected active bar */}
+        {isSelected && (
+          <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#2D4739]" />
+        )}
+
+        <div className="flex items-start justify-between gap-2 mb-1">
+          <span className="font-semibold text-xs sm:text-sm text-[#19221C] truncate">
+            {note.title || 'Untitled Note'}
+          </span>
+          <div className="flex items-center gap-1.5 shrink-0">
+            {note.is_pinned && (
+              <Pin className="w-3 h-3 text-[#4E6E58] shrink-0 fill-[#4E6E58]" />
+            )}
+            <button
+              type="button"
+              {...attributes}
+              {...listeners}
+              onClick={(e) => e.stopPropagation()}
+              aria-label="Drag to reorder note"
+              className="p-1 -mr-1 text-[#8A968F] opacity-40 sm:opacity-0 group-hover:opacity-70 hover:opacity-100 hover:text-[#2D4739] transition-opacity cursor-grab active:cursor-grabbing touch-none"
+            >
+              <GripVertical className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        </div>
+
+        <p className="text-[11px] text-[#5C6861] line-clamp-2 leading-relaxed mb-2.5 font-sans">
+          {preview}
+        </p>
+
+        <div className="flex items-center justify-between text-[10px] text-[#8A968F]">
+          <span className="inline-flex items-center gap-1 font-mono">
+            <Clock className="w-2.5 h-2.5" />
+            {formatDate(note.updated_at)}
+          </span>
+
+          <div className="flex items-center gap-1">
+            {note.tags && note.tags.length > 0 && (
+              <span className="hidden sm:inline-flex items-center gap-0.5 text-[#5C6861]">
+                <Tag className="w-2.5 h-2.5" />
+                {note.tags[0]}
+                {note.tags.length > 1 && ` +${note.tags.length - 1}`}
+              </span>
+            )}
+            <span className="px-1.5 py-0.5 rounded bg-[#E8EFE8] text-[#23392D] font-medium">
+              {note.category || 'General'}
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export const NotesView: React.FC = () => {
   const { searchQuery, activeFilter, headerActionTrigger } = useUI()
   const {
@@ -47,6 +174,7 @@ export const NotesView: React.FC = () => {
     flushPendingSave,
     deleteNote,
     togglePin,
+    reorderNotes,
   } = useNotes()
 
   const [selectedNoteId, setSelectedNoteId] = useState<string | null>(null)
@@ -54,6 +182,23 @@ export const NotesView: React.FC = () => {
 
   // Track headerActionTrigger to create note when rapid add is clicked
   const lastActionTriggerRef = useRef(headerActionTrigger)
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 5,
+      },
+    }),
+    useSensor(TouchSensor, {
+      activationConstraint: {
+        delay: 200,
+        tolerance: 5,
+      },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  )
 
   // Clean note content preview (strip markdown symbols)
   const getCleanPreview = (content: string): string => {
@@ -154,6 +299,15 @@ export const NotesView: React.FC = () => {
     return success
   }
 
+  const handleDragEnd = useCallback(
+    (event: DragEndEvent) => {
+      const { active, over } = event
+      if (!over || active.id === over.id) return
+      reorderNotes(String(active.id), String(over.id), filteredNotes)
+    },
+    [reorderNotes, filteredNotes]
+  )
+
   return (
     <div className="h-full flex flex-col md:flex-row bg-[#FBFBF9] overflow-hidden">
       {/* 
@@ -197,7 +351,7 @@ export const NotesView: React.FC = () => {
         )}
 
         {/* Note List Scroll Container */}
-        <div className="overflow-y-auto flex-1 divide-y divide-[#E4E3DC]">
+        <div className="overflow-y-auto flex-1">
           {isLoading && notes.length === 0 ? (
             <div className="p-12 flex flex-col items-center justify-center text-xs text-[#5C6861] gap-2">
               <Loader2 className="w-5 h-5 animate-spin text-[#2D4739]" />
@@ -216,61 +370,28 @@ export const NotesView: React.FC = () => {
               </button>
             </div>
           ) : (
-            filteredNotes.map((note) => {
-              const isSelected = selectedNote?.id === note.id
-              const preview = getCleanPreview(note.content)
-
-              return (
-                <button
-                  key={note.id}
-                  type="button"
-                  onClick={() => handleSelectNote(note)}
-                  className={`w-full text-left p-3.5 sm:p-4 transition-colors cursor-pointer block relative ${
-                    isSelected
-                      ? 'bg-[#F4F3EE]'
-                      : 'hover:bg-[#F4F3EE]/60 bg-[#FBFBF9]'
-                  }`}
-                >
-                  {/* Selected active bar */}
-                  {isSelected && (
-                    <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#2D4739]" />
-                  )}
-
-                  <div className="flex items-start justify-between gap-2 mb-1">
-                    <span className="font-semibold text-xs sm:text-sm text-[#19221C] truncate">
-                      {note.title || 'Untitled Note'}
-                    </span>
-                    {note.is_pinned && (
-                      <Pin className="w-3 h-3 text-[#4E6E58] shrink-0 fill-[#4E6E58]" />
-                    )}
-                  </div>
-
-                  <p className="text-[11px] text-[#5C6861] line-clamp-2 leading-relaxed mb-2.5 font-sans">
-                    {preview}
-                  </p>
-
-                  <div className="flex items-center justify-between text-[10px] text-[#8A968F]">
-                    <span className="inline-flex items-center gap-1 font-mono">
-                      <Clock className="w-2.5 h-2.5" />
-                      {formatDate(note.updated_at)}
-                    </span>
-
-                    <div className="flex items-center gap-1">
-                      {note.tags && note.tags.length > 0 && (
-                        <span className="hidden sm:inline-flex items-center gap-0.5 text-[#5C6861]">
-                          <Tag className="w-2.5 h-2.5" />
-                          {note.tags[0]}
-                          {note.tags.length > 1 && ` +${note.tags.length - 1}`}
-                        </span>
-                      )}
-                      <span className="px-1.5 py-0.5 rounded bg-[#E8EFE8] text-[#23392D] font-medium">
-                        {note.category || 'General'}
-                      </span>
-                    </div>
-                  </div>
-                </button>
-              )
-            })
+            <DndContext
+              sensors={sensors}
+              collisionDetection={closestCenter}
+              onDragEnd={handleDragEnd}
+            >
+              <SortableContext
+                items={filteredNotes.map((n) => n.id)}
+                strategy={verticalListSortingStrategy}
+              >
+                <div className="divide-y divide-[#E4E3DC]">
+                  {filteredNotes.map((note) => (
+                    <SortableNoteItem
+                      key={note.id}
+                      note={note}
+                      isSelected={selectedNote?.id === note.id}
+                      onSelect={handleSelectNote}
+                      getCleanPreview={getCleanPreview}
+                    />
+                  ))}
+                </div>
+              </SortableContext>
+            </DndContext>
           )}
         </div>
       </div>

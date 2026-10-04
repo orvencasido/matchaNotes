@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react'
+import { arrayMove } from '@dnd-kit/sortable'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/hooks/useAuth'
 import {
@@ -38,6 +39,19 @@ export const VaultProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const clearError = useCallback(() => {
     setError(null)
   }, [])
+
+  const sortVaultItems = (list: DecryptedVaultItem[]): DecryptedVaultItem[] => {
+    return [...list].sort((a, b) => {
+      const orderA = a.sort_order ?? Infinity
+      const orderB = b.sort_order ?? Infinity
+      if (orderA !== orderB) {
+        return orderA - orderB
+      }
+      const dateA = new Date(a.updatedAt).getTime()
+      const dateB = new Date(b.updatedAt).getTime()
+      return dateB - dateA
+    })
+  }
 
   // Lock the vault, wiping the master key and decrypted items from memory
   const lockVault = useCallback(() => {
@@ -192,6 +206,7 @@ export const VaultProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         .from('vault_items')
         .select('*')
         .eq('user_id', user.id)
+        .order('sort_order', { ascending: true, nullsFirst: false })
         .order('updated_at', { ascending: false })
 
       if (fetchErr || !data) {
@@ -215,6 +230,7 @@ export const VaultProvider: React.FC<{ children: React.ReactNode }> = ({ childre
             payload,
             createdAt: row.created_at,
             updatedAt: row.updated_at,
+            sort_order: row.sort_order,
           })
         } catch (decryptErr) {
           console.error('Failed to decrypt vault item id:', row.id, decryptErr)
@@ -226,6 +242,7 @@ export const VaultProvider: React.FC<{ children: React.ReactNode }> = ({ childre
             payload: { notes: '[Decryption Error: corrupted or wrong key]' },
             createdAt: row.created_at,
             updatedAt: row.updated_at,
+            sort_order: row.sort_order,
           })
         }
       }
@@ -330,6 +347,7 @@ export const VaultProvider: React.FC<{ children: React.ReactNode }> = ({ childre
             category: input.category,
             encrypted_payload: ciphertext,
             iv,
+            sort_order: input.sort_order ?? null,
           })
           .select()
           .single()
@@ -346,9 +364,10 @@ export const VaultProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           payload: input.payload,
           createdAt: data.created_at,
           updatedAt: data.updated_at,
+          sort_order: data.sort_order,
         }
 
-        setItems((prev) => [newItem, ...prev])
+        setItems((prev) => sortVaultItems([newItem, ...prev]))
         return newItem
       } catch (err: unknown) {
         console.error('Create vault item error:', err)
@@ -379,12 +398,14 @@ export const VaultProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           encrypted_payload?: string
           iv?: string
           updated_at: string
+          sort_order?: number | null
         } = {
           updated_at: new Date().toISOString(),
         }
 
         if (input.title !== undefined) updates.title = input.title.trim()
         if (input.category !== undefined) updates.category = input.category
+        if (input.sort_order !== undefined) updates.sort_order = input.sort_order
         if (input.payload !== undefined) {
           const { ciphertext, iv } = await encryptVaultPayload(
             input.payload,
@@ -405,18 +426,21 @@ export const VaultProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         }
 
         setItems((prev) =>
-          prev.map((item) => {
-            if (item.id === id) {
-              return {
-                ...item,
-                title: input.title !== undefined ? input.title.trim() : item.title,
-                category: (input.category || item.category) as VaultCategory,
-                payload: input.payload !== undefined ? input.payload : item.payload,
-                updatedAt: updates.updated_at,
+          sortVaultItems(
+            prev.map((item) => {
+              if (item.id === id) {
+                return {
+                  ...item,
+                  title: input.title !== undefined ? input.title.trim() : item.title,
+                  category: (input.category || item.category) as VaultCategory,
+                  payload: input.payload !== undefined ? input.payload : item.payload,
+                  updatedAt: updates.updated_at,
+                  sort_order: input.sort_order !== undefined ? input.sort_order : item.sort_order,
+                }
               }
-            }
-            return item
-          })
+              return item
+            })
+          )
         )
 
         return true
@@ -429,6 +453,68 @@ export const VaultProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       }
     },
     [user]
+  )
+
+  // Reorder Vault items
+  const reorderVaultItems = useCallback(
+    async (activeId: string, overId: string, currentList?: DecryptedVaultItem[]): Promise<boolean> => {
+      if (!user || isLocked) return false
+      if (activeId === overId) return true
+
+      const list = currentList && currentList.length > 0 ? currentList : items
+      const oldIndex = list.findIndex((i) => i.id === activeId)
+      const newIndex = list.findIndex((i) => i.id === overId)
+      if (oldIndex === -1 || newIndex === -1 || oldIndex === newIndex) return false
+
+      const reordered = arrayMove(list, oldIndex, newIndex)
+      const prevItem = newIndex > 0 ? reordered[newIndex - 1] : null
+      const nextItem = newIndex < reordered.length - 1 ? reordered[newIndex + 1] : null
+
+      let calculatedSortOrder: number
+      if (!prevItem && nextItem) {
+        const nextOrder = typeof nextItem.sort_order === 'number' ? nextItem.sort_order : 1000
+        calculatedSortOrder = nextOrder - 100
+      } else if (prevItem && !nextItem) {
+        const prevOrder = typeof prevItem.sort_order === 'number' ? prevItem.sort_order : 1000
+        calculatedSortOrder = prevOrder + 100
+      } else if (prevItem && nextItem) {
+        const prevOrder = typeof prevItem.sort_order === 'number' ? prevItem.sort_order : 1000
+        let nextOrder = typeof nextItem.sort_order === 'number' ? nextItem.sort_order : prevOrder + 200
+        if (nextOrder <= prevOrder) {
+          nextOrder = prevOrder + 200
+        }
+        calculatedSortOrder = (prevOrder + nextOrder) / 2
+      } else {
+        calculatedSortOrder = 1000
+      }
+
+      // Optimistic UI reordering
+      setItems((prev) => {
+        const updated = prev.map((item) =>
+          item.id === activeId ? { ...item, sort_order: calculatedSortOrder } : item
+        )
+        return sortVaultItems(updated)
+      })
+
+      try {
+        const { error: updateErr } = await supabase
+          .from('vault_items')
+          .update({ sort_order: calculatedSortOrder })
+          .eq('id', activeId)
+          .eq('user_id', user.id)
+
+        if (updateErr) throw updateErr
+        return true
+      } catch (err: unknown) {
+        console.error('Failed to reorder vault item:', err)
+        setError(err instanceof Error ? err.message : 'Failed to reorder vault item')
+        if (masterKeyRef.current) {
+          decryptAllItems(masterKeyRef.current).then((decrypted) => setItems(decrypted))
+        }
+        return false
+      }
+    },
+    [user, isLocked, items, decryptAllItems]
   )
 
   // Delete item
@@ -542,6 +628,7 @@ export const VaultProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         createVaultItem,
         updateVaultItem,
         deleteVaultItem,
+        reorderVaultItems,
         refetchItems,
         checkVaultConfig,
         clearError,

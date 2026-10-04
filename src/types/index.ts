@@ -41,16 +41,37 @@ export interface DecryptedVaultItem {
   payload: DecryptedVaultPayload
   createdAt: string
   updatedAt: string
+  sort_order?: number | null
 }
 
 export interface CreateVaultItemInput {
   title: string
   category: VaultCategory
   payload: DecryptedVaultPayload
+  sort_order?: number | null
 }
 
 export interface UpdateVaultItemInput {
   title?: string
   category?: VaultCategory
   payload?: DecryptedVaultPayload
+  sort_order?: number | null
+}
+
+export interface CreateNoteInput {
+  title?: string
+  content?: string
+  category?: string
+  tags?: string[]
+  is_pinned?: boolean
+  sort_order?: number | null
+}
+
+export interface UpdateNoteInput {
+  title?: string
+  content?: string
+  category?: string
+  tags?: string[]
+  is_pinned?: boolean
+  sort_order?: number | null
 }

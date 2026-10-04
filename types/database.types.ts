@@ -84,6 +84,7 @@ export type Database = {
           created_at: string
           id: string
           is_pinned: boolean
+          sort_order: number | null
           tags: string[]
           title: string
           updated_at: string
@@ -95,6 +96,7 @@ export type Database = {
           created_at?: string
           id?: string
           is_pinned?: boolean
+          sort_order?: number | null
           tags?: string[]
           title?: string
           updated_at?: string
@@ -106,6 +108,7 @@ export type Database = {
           created_at?: string
           id?: string
           is_pinned?: boolean
+          sort_order?: number | null
           tags?: string[]
           title?: string
           updated_at?: string
@@ -141,6 +144,7 @@ export type Database = {
           encrypted_payload: string
           id: string
           iv: string
+          sort_order: number | null
           title: string
           updated_at: string
           user_id: string
@@ -151,6 +155,7 @@ export type Database = {
           encrypted_payload: string
           id?: string
           iv: string
+          sort_order?: number | null
           title?: string
           updated_at?: string
           user_id: string
@@ -161,6 +166,7 @@ export type Database = {
           encrypted_payload?: string
           id?: string
           iv?: string
+          sort_order?: number | null
           title?: string
           updated_at?: string
           user_id?: string
