@@ -54,9 +54,11 @@ export const Sidebar: React.FC = () => {
       {/* Brand Header */}
       <div className="h-16 flex items-center justify-between px-4 border-b border-[#E4E3DC]/70">
         <div className="flex items-center gap-2.5 min-w-0">
-          <div className="w-8 h-8 rounded-lg bg-[#2D4739] text-[#FBFBF9] flex items-center justify-center font-medium text-sm shadow-xs shrink-0">
-            <span>M</span>
-          </div>
+          <img
+            src="/icon.png"
+            alt="MatchaNotes"
+            className="w-8 h-8 rounded-lg object-contain shrink-0"
+          />
           {!isSidebarCollapsed && (
             <div className="flex flex-col min-w-0">
               <span className="font-semibold text-sm tracking-tight text-[#19221C] truncate">

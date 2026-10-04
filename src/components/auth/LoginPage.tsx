@@ -38,9 +38,11 @@ export const LoginPage: React.FC = () => {
       <header className="w-full max-w-md mx-auto flex items-center justify-between">
         <div className="flex items-center gap-2">
           {/* Subtle Matcha leaf / note mark */}
-          <div className="w-8 h-8 rounded-lg bg-[#2D4739] flex items-center justify-center text-[#FBFBF9] shadow-xs">
-            <span className="font-semibold text-sm tracking-tight">M</span>
-          </div>
+          <img
+            src="/icon.png"
+            alt="MatchaNotes"
+            className="w-8 h-8 rounded-lg object-contain shrink-0"
+          />
           <span className="font-semibold text-lg tracking-tight text-[#19221C]">
             Matcha<span className="text-[#4E6E58] font-normal">Notes</span>
           </span>

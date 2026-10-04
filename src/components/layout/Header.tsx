@@ -124,9 +124,11 @@ export const Header: React.FC = () => {
         <>
           {/* Mobile Brand & Active View Title */}
           <div className="flex items-center gap-2.5 lg:hidden min-w-0">
-            <div className="w-8 h-8 rounded-lg bg-[#2D4739] text-[#FBFBF9] flex items-center justify-center font-medium text-sm shadow-xs shrink-0">
-              <span>M</span>
-            </div>
+            <img
+              src="/icon.png"
+              alt="MatchaNotes"
+              className="w-7 h-7 rounded-lg object-contain shrink-0"
+            />
             <div className="flex flex-col min-w-0">
               <span className="font-semibold text-sm tracking-tight text-[#19221C] truncate leading-tight">
                 {getViewTitle(activeView)}
