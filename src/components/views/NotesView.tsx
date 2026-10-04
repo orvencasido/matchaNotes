@@ -137,7 +137,7 @@ const SortableNoteItem: React.FC<SortableNoteItemProps> = ({
         </p>
 
         <div className="flex items-center justify-between text-[10px] text-[#8A968F]">
-          <span className="inline-flex items-center gap-1 font-mono">
+          <span className="inline-flex items-center gap-1">
             <Clock className="w-2.5 h-2.5" />
             {formatDate(note.updated_at)}
           </span>
@@ -326,7 +326,7 @@ export const NotesView: React.FC = () => {
               {filteredNotes.length} {filteredNotes.length === 1 ? 'note' : 'notes'}
             </span>
             {searchQuery && (
-              <span className="text-[10px] text-[#8A968F] font-mono truncate max-w-[120px]">
+              <span className="text-[10px] text-[#8A968F] truncate max-w-[120px]">
                 matching &quot;{searchQuery}&quot;
               </span>
             )}

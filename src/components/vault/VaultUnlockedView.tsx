@@ -237,7 +237,7 @@ export const VaultUnlockedView: React.FC = () => {
   )
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-[max(1.5rem,calc(1.5rem+env(safe-area-inset-top,0px)))] sm:pt-6 lg:pt-8 pb-6 sm:pb-8 space-y-6">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-[max(1.5rem,calc(1.5rem+env(safe-area-inset-top,0px)))] sm:pt-6 lg:pt-8 pb-8 sm:pb-12 space-y-6">
       {/* Top Bar */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-4 border-b border-[#E4E3DC]">
         {/* Title & Security Status */}
@@ -250,7 +250,7 @@ export const VaultUnlockedView: React.FC = () => {
               <h1 className="text-lg font-bold text-[#19221C] tracking-tight">
                 Secure Vault
               </h1>
-              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#E8EFE8] text-[#23392D] text-[10px] font-mono font-medium">
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#E8EFE8] text-[#23392D] text-[10px] font-semibold">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-600 animate-pulse" />
                 <span>Decrypted (Memory)</span>
               </span>
@@ -261,60 +261,59 @@ export const VaultUnlockedView: React.FC = () => {
           </div>
         </div>
 
-        {/* Global Actions */}
-        <div className="flex flex-wrap items-center gap-2">
-          {/* Top-level Expand / Collapse All Toggle */}
-          {allGroupNames.length > 0 && (
-            <button
-              type="button"
-              onClick={handleToggleAllGroups}
-              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-[#F4F3EE] hover:bg-[#ECEAE3] text-[#19221C] text-xs font-medium border border-[#E4E3DC] transition-all cursor-pointer shadow-2xs active:scale-95"
-              title={areAllCollapsed ? 'Expand all sections' : 'Collapse all sections'}
-            >
-              {areAllCollapsed ? (
-                <>
-                  <ChevronsDown className="w-3.5 h-3.5 text-[#2D4739]" />
-                  <span>Expand All</span>
-                </>
-              ) : (
-                <>
-                  <ChevronsUp className="w-3.5 h-3.5 text-[#2D4739]" />
-                  <span>Collapse All</span>
-                </>
-              )}
-            </button>
-          )}
-
-          {/* Generator Modal Trigger */}
-          <button
-            type="button"
-            onClick={() => setIsGeneratorOpen(true)}
-            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-[#F4F3EE] hover:bg-[#ECEAE3] text-[#19221C] text-xs font-medium border border-[#E4E3DC] transition-all cursor-pointer shadow-2xs active:scale-95"
-            title="Generate secure random password"
-          >
-            <KeyRound className="w-3.5 h-3.5 text-[#2D4739]" />
-            <span>Generate Password</span>
-          </button>
-
-          {/* + New Item Button */}
+        {/* Global Actions: 2x2 grid on mobile (< sm), clean toolbar on desktop (sm+) */}
+        <div className="grid grid-cols-2 gap-2 w-full sm:w-auto sm:flex sm:flex-wrap sm:items-center sm:gap-2">
+          {/* Button 1: + New Item */}
           <button
             type="button"
             onClick={handleOpenCreate}
-            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-[#2D4739] hover:bg-[#23392D] text-[#FBFBF9] text-xs font-medium shadow-xs transition-all cursor-pointer active:scale-95"
+            className="inline-flex items-center justify-center gap-1.5 px-3.5 h-10 rounded-xl bg-[#2D4739] hover:bg-[#23392D] text-[#FBFBF9] text-xs font-medium shadow-xs transition-all cursor-pointer active:scale-95"
           >
             <Plus className="w-4 h-4" />
-            <span>New Item</span>
+            <span className="truncate">New Item</span>
           </button>
 
-          {/* Tactile Lock Vault Button */}
+          {/* Button 2: Lock Vault */}
           <button
             type="button"
             onClick={lockVault}
-            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-800 text-xs font-medium border border-rose-200 transition-all cursor-pointer active:scale-95 shadow-2xs"
+            className="inline-flex items-center justify-center gap-1.5 px-3.5 h-10 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-800 text-xs font-medium border border-rose-200 transition-all cursor-pointer active:scale-95 shadow-2xs"
             title="Wipe keys and lock immediately"
           >
             <Lock className="w-3.5 h-3.5 text-rose-700" />
-            <span>Lock Vault</span>
+            <span className="truncate">Lock Vault</span>
+          </button>
+
+          {/* Button 3: Password Generator */}
+          <button
+            type="button"
+            onClick={() => setIsGeneratorOpen(true)}
+            className="inline-flex items-center justify-center gap-1.5 px-3 h-10 rounded-xl bg-[#F4F3EE] hover:bg-[#ECEAE3] text-[#19221C] text-xs font-medium border border-[#E4E3DC] transition-all cursor-pointer shadow-2xs active:scale-95"
+            title="Generate secure random password"
+          >
+            <KeyRound className="w-3.5 h-3.5 text-[#2D4739]" />
+            <span className="truncate">Password Generator</span>
+          </button>
+
+          {/* Button 4: Collapse All / Expand All */}
+          <button
+            type="button"
+            onClick={handleToggleAllGroups}
+            disabled={allGroupNames.length === 0}
+            className="inline-flex items-center justify-center gap-1.5 px-3 h-10 rounded-xl bg-[#F4F3EE] hover:bg-[#ECEAE3] text-[#19221C] text-xs font-medium border border-[#E4E3DC] transition-all shadow-2xs active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+            title={areAllCollapsed ? 'Expand all sections' : 'Collapse all sections'}
+          >
+            {areAllCollapsed ? (
+              <>
+                <ChevronsDown className="w-3.5 h-3.5 text-[#2D4739]" />
+                <span className="truncate">Expand All</span>
+              </>
+            ) : (
+              <>
+                <ChevronsUp className="w-3.5 h-3.5 text-[#2D4739]" />
+                <span className="truncate">Collapse All</span>
+              </>
+            )}
           </button>
         </div>
       </div>
@@ -362,7 +361,7 @@ export const VaultUnlockedView: React.FC = () => {
         </div>
 
         {/* Category Pills */}
-        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0 no-scrollbar">
+        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0 no-scrollbar w-full sm:w-auto">
           {FILTER_PILLS.map((pill) => {
             const count = categoryCounts[pill] || 0
             const isActive = activeFilter === pill
@@ -379,7 +378,7 @@ export const VaultUnlockedView: React.FC = () => {
               >
                 <span>{pill}</span>
                 <span
-                  className={`text-[10px] font-mono px-1.5 py-0.2 rounded-full ${
+                  className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${
                     isActive ? 'bg-[#3C5D4B] text-[#FBFBF9]' : 'bg-[#E4E3DC] text-[#5C6861]'
                   }`}
                 >
@@ -422,7 +421,7 @@ export const VaultUnlockedView: React.FC = () => {
                       <span className="text-xs font-semibold text-[#19221C] truncate tracking-tight">
                         {group}
                       </span>
-                      <span className="px-2 py-0.5 rounded-full bg-[#E4E3DC] text-[#5C6861] text-[10px] font-mono font-medium shrink-0">
+                      <span className="px-2 py-0.5 rounded-full bg-[#E4E3DC] text-[#5C6861] text-[10px] font-semibold shrink-0">
                         {groupItems.length}
                       </span>
                     </div>

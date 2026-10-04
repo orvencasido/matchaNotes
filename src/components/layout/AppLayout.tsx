@@ -23,7 +23,7 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
         {isNotesView && <Header />}
 
         {/* Main Scrollable View Area: Single scroll container with momentum scrolling and safe bottom clearance */}
-        <main className="flex-1 overflow-y-auto overscroll-y-contain momentum-scroll pb-[calc(4.75rem+env(safe-area-inset-bottom,0px))] lg:pb-0 focus:outline-none">
+        <main className="flex-1 overflow-y-auto overscroll-y-contain momentum-scroll pb-[calc(6.5rem+env(safe-area-inset-bottom,0px))] lg:pb-0 focus:outline-none">
           {children}
         </main>
       </div>

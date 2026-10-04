@@ -167,25 +167,25 @@ export const VaultCard: React.FC<VaultCardProps> = ({ item, onEdit, onDelete }) 
               <CategoryIcon className="w-4 h-4" />
             </div>
             <div className="min-w-0">
-              <h3 className="text-xs font-semibold text-[#19221C] truncate leading-tight">
+              <h3 className="text-xs font-semibold text-[#19221C] break-words line-clamp-2 leading-tight">
                 {title}
               </h3>
               <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
                 <span
-                  className={`inline-block px-1.5 py-0.5 rounded text-[10px] font-medium ${badgeBg} ${badgeText}`}
+                  className={`inline-block px-1.5 py-0.5 rounded text-[10px] font-medium whitespace-nowrap shrink-0 ${badgeBg} ${badgeText}`}
                 >
                   {label}
                 </span>
                 {payload.group && (
                   <span
-                    className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium bg-[#E8EFE8] text-[#2D4739] border border-[#d2dfd2] max-w-[130px]"
+                    className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium bg-[#E8EFE8] text-[#2D4739] border border-[#d2dfd2] max-w-[130px] whitespace-nowrap shrink-0"
                     title={`Group: ${payload.group}`}
                   >
                     <Folder className="w-2.5 h-2.5 shrink-0" />
                     <span className="truncate">{payload.group}</span>
                   </span>
                 )}
-                <span className="text-[10px] text-[#8A968F] font-mono">• {formattedDate}</span>
+                <span className="text-[10px] text-[#8A968F] whitespace-nowrap shrink-0">• {formattedDate}</span>
               </div>
             </div>
           </div>
@@ -214,7 +214,7 @@ export const VaultCard: React.FC<VaultCardProps> = ({ item, onEdit, onDelete }) 
                 <button
                   type="button"
                   onClick={() => onDelete(item.id)}
-                  className="text-rose-600 font-semibold hover:underline"
+                  className="text-rose-600 font-semibold hover:underline cursor-pointer"
                 >
                   Confirm
                 </button>
@@ -222,7 +222,7 @@ export const VaultCard: React.FC<VaultCardProps> = ({ item, onEdit, onDelete }) 
                 <button
                   type="button"
                   onClick={() => setIsDeleting(false)}
-                  className="text-[#5C6861] hover:underline"
+                  className="text-[#5C6861] hover:underline cursor-pointer"
                 >
                   Cancel
                 </button>
@@ -254,7 +254,7 @@ export const VaultCard: React.FC<VaultCardProps> = ({ item, onEdit, onDelete }) 
               <button
                 type="button"
                 onClick={() => handleCopy(payload.username!, 'username')}
-                className="p-1 rounded-md text-[#5C6861] hover:text-[#2D4739] hover:bg-[#ECEAE3] transition-colors shrink-0"
+                className="p-1 rounded-md text-[#5C6861] hover:text-[#2D4739] hover:bg-[#ECEAE3] transition-colors shrink-0 cursor-pointer"
                 title="Copy username"
               >
                 {copiedKey === 'username' ? (
@@ -286,7 +286,7 @@ export const VaultCard: React.FC<VaultCardProps> = ({ item, onEdit, onDelete }) 
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="p-1 rounded-md text-[#5C6861] hover:text-[#19221C] hover:bg-[#ECEAE3] transition-colors"
+                  className="p-1 rounded-md text-[#5C6861] hover:text-[#19221C] hover:bg-[#ECEAE3] transition-colors cursor-pointer"
                   title={showPassword ? 'Hide password' : 'Show password'}
                 >
                   {showPassword ? (
@@ -298,7 +298,7 @@ export const VaultCard: React.FC<VaultCardProps> = ({ item, onEdit, onDelete }) 
                 <button
                   type="button"
                   onClick={() => handleCopy(payload.password!, 'password')}
-                  className="p-1 rounded-md text-[#5C6861] hover:text-[#2D4739] hover:bg-[#ECEAE3] transition-colors"
+                  className="p-1 rounded-md text-[#5C6861] hover:text-[#2D4739] hover:bg-[#ECEAE3] transition-colors cursor-pointer"
                   title="Copy password (auto-clears in 30s)"
                 >
                   {copiedKey === 'password' ? (
@@ -327,7 +327,7 @@ export const VaultCard: React.FC<VaultCardProps> = ({ item, onEdit, onDelete }) 
                   <button
                     type="button"
                     onClick={() => setShowCardNumber(!showCardNumber)}
-                    className="p-1 rounded-md text-[#5C6861] hover:text-[#19221C] hover:bg-[#ECEAE3] transition-colors"
+                    className="p-1 rounded-md text-[#5C6861] hover:text-[#19221C] hover:bg-[#ECEAE3] transition-colors cursor-pointer"
                     title={showCardNumber ? 'Hide card number' : 'Show card number'}
                   >
                     {showCardNumber ? (
@@ -339,7 +339,7 @@ export const VaultCard: React.FC<VaultCardProps> = ({ item, onEdit, onDelete }) 
                   <button
                     type="button"
                     onClick={() => handleCopy(payload.cardNumber!, 'card')}
-                    className="p-1 rounded-md text-[#5C6861] hover:text-[#2D4739] hover:bg-[#ECEAE3] transition-colors"
+                    className="p-1 rounded-md text-[#5C6861] hover:text-[#2D4739] hover:bg-[#ECEAE3] transition-colors cursor-pointer"
                     title="Copy card number"
                   >
                     {copiedKey === 'card' ? (
@@ -361,7 +361,7 @@ export const VaultCard: React.FC<VaultCardProps> = ({ item, onEdit, onDelete }) 
                   <button
                     type="button"
                     onClick={() => setShowCvv(!showCvv)}
-                    className="p-0.5 rounded text-[#5C6861] hover:text-[#19221C]"
+                    className="p-0.5 rounded text-[#5C6861] hover:text-[#19221C] cursor-pointer"
                   >
                     {showCvv ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3" />}
                   </button>
@@ -369,7 +369,7 @@ export const VaultCard: React.FC<VaultCardProps> = ({ item, onEdit, onDelete }) 
                     <button
                       type="button"
                       onClick={() => handleCopy(payload.cvv!, 'cvv')}
-                      className="p-0.5 rounded text-[#5C6861] hover:text-[#2D4739]"
+                      className="p-0.5 rounded text-[#5C6861] hover:text-[#2D4739] cursor-pointer"
                       title="Copy CVV"
                     >
                       {copiedKey === 'cvv' ? (
@@ -392,7 +392,7 @@ export const VaultCard: React.FC<VaultCardProps> = ({ item, onEdit, onDelete }) 
                 <button
                   type="button"
                   onClick={() => handleCopy(payload.notes!, 'notes')}
-                  className="p-0.5 rounded text-[#5C6861] hover:text-[#2D4739]"
+                  className="p-0.5 rounded text-[#5C6861] hover:text-[#2D4739] cursor-pointer"
                   title="Copy notes"
                 >
                   {copiedKey === 'notes' ? (

@@ -99,7 +99,7 @@ export const MediaView: React.FC = () => {
           <h1 className="text-xl sm:text-2xl font-bold text-[#19221C] tracking-tight">
             Media Gallery
           </h1>
-          <p className="text-xs text-[#5C6861] mt-0.5 font-mono">
+          <p className="text-xs text-[#5C6861] mt-0.5 font-medium">
             {items.length} {items.length === 1 ? 'file' : 'files'} stored in note-media
           </p>
         </div>
@@ -188,7 +188,7 @@ export const MediaView: React.FC = () => {
               ? 'Uploading to secure storage...'
               : 'Drop photos here or browse to upload'}
           </p>
-          <p className="text-[11px] text-[#5C6861] font-mono">
+          <p className="text-[11px] text-[#5C6861]">
             JPG, PNG, GIF, WebP, SVG, PDF up to 50MB
           </p>
         </div>
@@ -258,7 +258,7 @@ export const MediaView: React.FC = () => {
                   <span className="font-medium text-[#19221C] truncate mb-1">
                     {item.fileName}
                   </span>
-                  <div className="flex items-center justify-between text-[10px] text-[#5C6861] font-mono">
+                  <div className="flex items-center justify-between text-[10px] text-[#5C6861]">
                     <span>{formatFileSize(item.size_bytes)}</span>
                     <span>{formatDate(item.created_at)}</span>
                   </div>

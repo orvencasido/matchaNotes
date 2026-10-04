@@ -23,6 +23,10 @@
     border-color: #E4E3DC;
   }
 
+  button, [role="button"], input[type="button"], input[type="submit"] {
+    cursor: pointer;
+  }
+
   html,
   body {
     height: 100%;

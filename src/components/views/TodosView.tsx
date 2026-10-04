@@ -116,7 +116,7 @@ const SortableTodoItem: React.FC<SortableTodoItemProps> = ({
         {displayTags.map((tag) => (
           <span
             key={tag}
-            className="text-[10px] font-mono px-2 py-0.5 rounded bg-[#E8EFE8] text-[#23392D]"
+            className="text-[10px] font-medium px-2 py-0.5 rounded bg-[#E8EFE8] text-[#23392D]"
           >
             #{tag}
           </span>
@@ -258,14 +258,14 @@ export const TodosView: React.FC = () => {
   const TAG_OPTIONS = ['Task', 'Work', 'Personal', 'Ideas', 'Urgent']
 
   return (
-    <div className="max-w-2xl mx-auto px-4 sm:px-8 lg:px-10 pt-[max(1.5rem,calc(1.5rem+env(safe-area-inset-top,0px)))] sm:pt-8 lg:pt-10 pb-6 sm:pb-8 lg:pb-10 space-y-6">
+    <div className="max-w-2xl mx-auto px-4 sm:px-8 lg:px-10 pt-[max(1.5rem,calc(1.5rem+env(safe-area-inset-top,0px)))] sm:pt-8 lg:pt-10 pb-8 sm:pb-10 lg:pb-12 space-y-6">
       {/* Header bar */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#E4E3DC] pb-4">
         <div>
           <h1 className="text-xl sm:text-2xl font-bold text-[#19221C] tracking-tight">
             To-Dos
           </h1>
-          <p className="text-xs text-[#5C6861] mt-0.5 font-mono">
+          <p className="text-xs text-[#5C6861] mt-0.5 font-medium">
             {pendingCount} pending • {completedCount} completed
           </p>
         </div>
@@ -341,13 +341,13 @@ export const TodosView: React.FC = () => {
 
         {/* Tag selection pills for new task */}
         <div className="flex items-center gap-1.5 pl-7 pt-1 overflow-x-auto no-scrollbar">
-          <span className="text-[10px] text-[#8A968F] font-mono shrink-0">Tag:</span>
+          <span className="text-[10px] text-[#8A968F] font-medium shrink-0">Tag:</span>
           {TAG_OPTIONS.map((tag) => (
             <button
               key={tag}
               type="button"
               onClick={() => setSelectedTag(tag)}
-              className={`px-2 py-0.5 rounded text-[10px] font-mono transition cursor-pointer shrink-0 ${
+              className={`px-2 py-0.5 rounded text-[10px] font-medium transition cursor-pointer shrink-0 ${
                 selectedTag === tag
                   ? 'bg-[#2D4739] text-[#FBFBF9]'
                   : 'bg-[#F4F3EE] hover:bg-[#ECEAE3] text-[#5C6861]'
