@@ -2,12 +2,16 @@ import React from 'react'
 import { Sidebar } from './Sidebar'
 import { Header } from './Header'
 import { MobileNav } from './MobileNav'
+import { useUI } from '@/hooks/useUI'
 
 interface AppLayoutProps {
   children: React.ReactNode
 }
 
 export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
+  const { activeView } = useUI()
+  const isNotesView = activeView === 'notes'
+
   return (
     <div className="h-dvh min-h-dvh w-full flex bg-[#FBFBF9] text-[#19221C] antialiased overflow-hidden select-text">
       {/* Desktop Navigation Rail */}
@@ -15,7 +19,8 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
 
       {/* Main Workspace Column */}
       <div className="flex-1 flex flex-col min-w-0 h-full overflow-hidden relative">
-        <Header />
+        {/* Header scoped exclusively to Notes view */}
+        {isNotesView && <Header />}
 
         {/* Main Scrollable View Area: Single scroll container with momentum scrolling and safe bottom clearance */}
         <main className="flex-1 overflow-y-auto overscroll-y-contain momentum-scroll pb-[calc(4.75rem+env(safe-area-inset-bottom,0px))] lg:pb-0 focus:outline-none">
@@ -28,3 +33,4 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
     </div>
   )
 }
+

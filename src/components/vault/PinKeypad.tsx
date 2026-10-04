@@ -83,7 +83,7 @@ export const PinKeypad: React.FC<PinKeypadProps> = ({
   }, [handleDigit, handleDelete, handleClear])
 
   return (
-    <div className="max-w-md mx-auto p-6 sm:p-10 flex flex-col items-center justify-center min-h-[calc(100vh-8rem)] text-center select-none">
+    <div className="max-w-md w-full mx-auto px-4 py-8 sm:py-12 flex flex-col items-center justify-center min-h-[calc(100dvh-5rem)] lg:min-h-[calc(100dvh-2rem)] text-center select-none pt-[max(2rem,calc(1.5rem+env(safe-area-inset-top,0px)))]">
       {/* Icon Badge */}
       <div className="w-12 h-12 rounded-2xl bg-[#E8EFE8] border border-[#d2dfd2] text-[#2D4739] flex items-center justify-center mb-4 shadow-xs">
         {icon || <Shield className="w-5 h-5 text-[#2D4739]" />}

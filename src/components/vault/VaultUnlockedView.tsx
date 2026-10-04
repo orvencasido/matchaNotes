@@ -130,7 +130,7 @@ export const VaultUnlockedView: React.FC = () => {
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-[max(1.5rem,calc(1.5rem+env(safe-area-inset-top,0px)))] sm:pt-6 lg:pt-8 pb-6 sm:pb-8 space-y-6">
       {/* Top Bar */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-4 border-b border-[#E4E3DC]">
         {/* Title & Security Status */}

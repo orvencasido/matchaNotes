@@ -49,7 +49,7 @@ export const PinSetupModal: React.FC<PinSetupModalProps> = ({
   }
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-[calc(100vh-8rem)] py-6">
+    <div className="flex flex-col items-center justify-center min-h-[calc(100dvh-5rem)] lg:min-h-[calc(100dvh-2rem)] py-8 px-4 pt-[max(2rem,calc(1.5rem+env(safe-area-inset-top,0px)))]">
       {/* Setup Step Progress Pill */}
       <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#E8EFE8] border border-[#d2dfd2] text-[#23392D] text-xs font-medium mb-2">
         <span className="w-1.5 h-1.5 rounded-full bg-[#2D4739]" />

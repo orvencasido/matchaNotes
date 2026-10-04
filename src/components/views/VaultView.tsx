@@ -22,7 +22,7 @@ export const VaultView: React.FC = () => {
   // 1. Initial configuration check loading state
   if (isConfigured === null) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[calc(100vh-8rem)] text-center">
+      <div className="flex flex-col items-center justify-center min-h-[calc(100dvh-5rem)] lg:min-h-full py-12 text-center pt-[env(safe-area-inset-top,0px)]">
         <div className="flex flex-col items-center gap-2.5">
           <Loader2 className="w-5 h-5 animate-spin text-[#2D4739]" />
           <p className="text-xs text-[#5C6861] font-medium">Checking vault configuration...</p>

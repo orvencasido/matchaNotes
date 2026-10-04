@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useRef, useEffect } from 'react'
+import React, { useState, useMemo, useRef } from 'react'
 import {
   Upload,
   Image as ImageIcon,
@@ -6,13 +6,13 @@ import {
   Trash2,
   AlertCircle,
   File,
+  Search,
+  X,
 } from 'lucide-react'
 import { useMedia, type MediaItem } from '@/hooks/useMedia'
-import { useUI } from '@/hooks/useUI'
 import { LightboxModal } from '@/components/notes/LightboxModal'
 
 export const MediaView: React.FC = () => {
-  const { searchQuery, headerActionTrigger } = useUI()
   const {
     items,
     isLoading,
@@ -22,20 +22,12 @@ export const MediaView: React.FC = () => {
     deleteMedia,
   } = useMedia()
 
+  const [searchQuery, setSearchQuery] = useState('')
   const [isDragging, setIsDragging] = useState(false)
   const [selectedItem, setSelectedItem] = useState<MediaItem | null>(null)
   const [uploadError, setUploadError] = useState<string | null>(null)
 
   const fileInputRef = useRef<HTMLInputElement>(null)
-  const lastActionTriggerRef = useRef(headerActionTrigger)
-
-  // Trigger file picker when Header "+ Upload" is clicked
-  useEffect(() => {
-    if (headerActionTrigger > lastActionTriggerRef.current) {
-      lastActionTriggerRef.current = headerActionTrigger
-      fileInputRef.current?.click()
-    }
-  }, [headerActionTrigger])
 
   const formatFileSize = (bytes: number | null): string => {
     if (!bytes) return 'Unknown size'
@@ -88,7 +80,7 @@ export const MediaView: React.FC = () => {
     }
   }
 
-  // Filter media items using searchQuery
+  // Filter media items using local searchQuery
   const filteredItems = useMemo(() => {
     if (!searchQuery.trim()) return items
     const q = searchQuery.toLowerCase()
@@ -100,7 +92,7 @@ export const MediaView: React.FC = () => {
   }, [items, searchQuery])
 
   return (
-    <div className="max-w-5xl mx-auto p-4 sm:p-8 lg:p-10 space-y-6">
+    <div className="max-w-5xl mx-auto px-4 sm:px-8 lg:px-10 pt-[max(1.5rem,calc(1.5rem+env(safe-area-inset-top,0px)))] sm:pt-8 lg:pt-10 pb-6 sm:pb-8 lg:pb-10 space-y-6">
       {/* Header bar */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#E4E3DC] pb-4">
         <div>
@@ -117,7 +109,7 @@ export const MediaView: React.FC = () => {
           type="button"
           onClick={() => fileInputRef.current?.click()}
           disabled={isUploading}
-          className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-[#2D4739] hover:bg-[#23392D] disabled:opacity-50 text-[#FBFBF9] text-xs font-medium transition cursor-pointer self-start sm:self-auto shadow-xs"
+          className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-[#2D4739] hover:bg-[#23392D] disabled:opacity-50 text-[#FBFBF9] text-xs font-medium transition cursor-pointer self-start sm:self-auto shadow-xs active:scale-95"
         >
           {isUploading ? (
             <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -127,6 +119,31 @@ export const MediaView: React.FC = () => {
           <span>Upload Media</span>
         </button>
       </div>
+
+      {/* Local search bar when items exist */}
+      {items.length > 0 && (
+        <div className="relative max-w-sm">
+          <Search className="w-3.5 h-3.5 text-[#8A968F] absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search media files..."
+            className="w-full pl-8.5 pr-8 py-1.5 text-xs bg-[#F4F3EE] hover:bg-[#ECEAE3]/70 focus:bg-[#FBFBF9] text-[#19221C] placeholder:text-[#8A968F] rounded-lg border border-[#E4E3DC] focus:border-[#2D4739] focus:ring-1 focus:ring-[#2D4739]/30 transition-all outline-none"
+          />
+          {searchQuery && (
+            <button
+              type="button"
+              onClick={() => setSearchQuery('')}
+              className="absolute right-2.5 top-1/2 -translate-y-1/2 p-0.5 text-[#5C6861] hover:text-[#19221C] rounded transition cursor-pointer"
+              title="Clear search"
+              aria-label="Clear search"
+            >
+              <X className="w-3 h-3" />
+            </button>
+          )}
+        </div>
+      )}
 
       {/* Hidden File Input */}
       <input

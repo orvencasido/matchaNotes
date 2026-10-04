@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useRef, useEffect } from 'react'
+import React, { useState, useMemo, useRef } from 'react'
 import {
   Plus,
   Check,
@@ -8,13 +8,11 @@ import {
   Circle,
 } from 'lucide-react'
 import { useNotes } from '@/hooks/useNotes'
-import { useUI } from '@/hooks/useUI'
 import type { Note } from '@/types'
 
 type TodoFilter = 'all' | 'pending' | 'completed'
 
 export const TodosView: React.FC = () => {
-  const { searchQuery, headerActionTrigger } = useUI()
   const {
     notes,
     isLoading,
@@ -29,15 +27,6 @@ export const TodosView: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   const inputRef = useRef<HTMLInputElement>(null)
-  const lastActionTriggerRef = useRef(headerActionTrigger)
-
-  // Focus input when Header "+ New Task" is clicked
-  useEffect(() => {
-    if (headerActionTrigger > lastActionTriggerRef.current) {
-      lastActionTriggerRef.current = headerActionTrigger
-      inputRef.current?.focus()
-    }
-  }, [headerActionTrigger])
 
   // Extract todos: notes that have category === 'To-Do' OR tags include 'todo'
   const todoNotes = useMemo(() => {
@@ -102,25 +91,15 @@ export const TodosView: React.FC = () => {
     }
   }
 
-  // Filter tasks based on status and search query
+  // Filter tasks based on status
   const filteredTodos = useMemo(() => {
     return todoNotes.filter((note) => {
-      // 1. Status Filter
       const completed = isCompleted(note)
       if (todoFilter === 'pending' && completed) return false
       if (todoFilter === 'completed' && !completed) return false
-
-      // 2. Search Query
-      if (searchQuery.trim()) {
-        const q = searchQuery.toLowerCase()
-        const matchesTitle = note.title.toLowerCase().includes(q)
-        const matchesTags = note.tags?.some((t) => t.toLowerCase().includes(q))
-        if (!matchesTitle && !matchesTags) return false
-      }
-
       return true
     })
-  }, [todoNotes, todoFilter, searchQuery])
+  }, [todoNotes, todoFilter])
 
   const pendingCount = useMemo(
     () => todoNotes.filter((n) => !isCompleted(n)).length,
@@ -135,7 +114,7 @@ export const TodosView: React.FC = () => {
   const TAG_OPTIONS = ['Task', 'Work', 'Personal', 'Ideas', 'Urgent']
 
   return (
-    <div className="max-w-2xl mx-auto p-4 sm:p-8 lg:p-10 space-y-6">
+    <div className="max-w-2xl mx-auto px-4 sm:px-8 lg:px-10 pt-[max(1.5rem,calc(1.5rem+env(safe-area-inset-top,0px)))] sm:pt-8 lg:pt-10 pb-6 sm:pb-8 lg:pb-10 space-y-6">
       {/* Header bar */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#E4E3DC] pb-4">
         <div>
