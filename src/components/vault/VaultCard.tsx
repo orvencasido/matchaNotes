@@ -15,6 +15,7 @@ import {
   Trash2,
   Lock,
   GripVertical,
+  Folder,
 } from 'lucide-react'
 import type { DecryptedVaultItem } from '@/types'
 
@@ -169,12 +170,21 @@ export const VaultCard: React.FC<VaultCardProps> = ({ item, onEdit, onDelete }) 
               <h3 className="text-xs font-semibold text-[#19221C] truncate leading-tight">
                 {title}
               </h3>
-              <div className="flex items-center gap-1.5 mt-0.5">
+              <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
                 <span
                   className={`inline-block px-1.5 py-0.5 rounded text-[10px] font-medium ${badgeBg} ${badgeText}`}
                 >
                   {label}
                 </span>
+                {payload.group && (
+                  <span
+                    className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium bg-[#E8EFE8] text-[#2D4739] border border-[#d2dfd2] max-w-[130px]"
+                    title={`Group: ${payload.group}`}
+                  >
+                    <Folder className="w-2.5 h-2.5 shrink-0" />
+                    <span className="truncate">{payload.group}</span>
+                  </span>
+                )}
                 <span className="text-[10px] text-[#8A968F] font-mono">• {formattedDate}</span>
               </div>
             </div>

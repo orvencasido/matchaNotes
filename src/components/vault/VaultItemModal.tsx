@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useMemo } from 'react'
 import {
   X,
   Eye,
@@ -11,8 +11,10 @@ import {
   User,
   Shield,
   Loader2,
+  Folder,
 } from 'lucide-react'
 import { generateSecurePassword } from '@/lib/crypto'
+import { useVault } from '@/hooks/useVault'
 import type {
   VaultCategory,
   DecryptedVaultItem,
@@ -28,6 +30,7 @@ export interface VaultItemModalProps {
   ) => Promise<boolean>
   initialItem?: DecryptedVaultItem | null
   isLoading?: boolean
+  existingGroups?: string[]
 }
 
 const CATEGORIES: { label: string; value: VaultCategory; icon: React.ElementType }[] = [
@@ -37,19 +40,31 @@ const CATEGORIES: { label: string; value: VaultCategory; icon: React.ElementType
   { label: 'Notes', value: 'Notes', icon: FileText },
 ]
 
-export const VaultItemModal: React.FC<VaultItemModalProps> = ({
-  isOpen,
+interface VaultItemModalContentProps {
+  onClose: () => void
+  onSave: (
+    data: CreateVaultItemInput | { id: string; updates: UpdateVaultItemInput }
+  ) => Promise<boolean>
+  initialItem?: DecryptedVaultItem | null
+  isLoading?: boolean
+  existingGroups?: string[]
+}
+
+const VaultItemModalContent: React.FC<VaultItemModalContentProps> = ({
   onClose,
   onSave,
   initialItem,
   isLoading = false,
+  existingGroups: propExistingGroups,
 }) => {
   const isEditing = Boolean(initialItem)
+  const { items } = useVault()
 
   const [title, setTitle] = useState(initialItem?.title || '')
   const [category, setCategory] = useState<VaultCategory>(
     (initialItem?.category as VaultCategory) || 'Accounts'
   )
+  const [group, setGroup] = useState(initialItem?.payload?.group || '')
   const [username, setUsername] = useState(initialItem?.payload?.username || '')
   const [password, setPassword] = useState(initialItem?.payload?.password || '')
   const [url, setUrl] = useState(initialItem?.payload?.url || '')
@@ -65,7 +80,33 @@ export const VaultItemModal: React.FC<VaultItemModalProps> = ({
   const [showCvv, setShowCvv] = useState(false)
   const [validationError, setValidationError] = useState<string | null>(null)
 
-  if (!isOpen) return null
+  const suggestionPills = useMemo(() => {
+    const list: string[] = []
+    const seen = new Set<string>()
+
+    const addIfNew = (name?: string | null) => {
+      const trimmed = name?.trim()
+      if (!trimmed) return
+      const lower = trimmed.toLowerCase()
+      if (!seen.has(lower) && lower !== 'general') {
+        seen.add(lower)
+        list.push(trimmed)
+      }
+    }
+
+    if (propExistingGroups) {
+      for (const g of propExistingGroups) addIfNew(g)
+    }
+
+    for (const it of items) {
+      addIfNew(it.payload?.group)
+    }
+
+    const defaults = ['Banking', 'Work', 'Personal', 'Streaming', 'Social']
+    for (const d of defaults) addIfNew(d)
+
+    return list.slice(0, 7)
+  }, [propExistingGroups, items])
 
   const handleGeneratePassword = () => {
     const generated = generateSecurePassword({ length: 18, symbols: true, numbers: true })
@@ -97,6 +138,7 @@ export const VaultItemModal: React.FC<VaultItemModalProps> = ({
             url: url.trim(),
             notes: notes.trim(),
           }),
+      group: group.trim() || undefined,
     }
 
     let success = false
@@ -124,13 +166,9 @@ export const VaultItemModal: React.FC<VaultItemModalProps> = ({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/30 backdrop-blur-xs"
-      onClick={onClose}
+      className="w-full max-w-lg bg-[#FBFBF9] rounded-2xl border border-[#E4E3DC] shadow-xl overflow-hidden flex flex-col max-h-[90vh] animate-fadeIn"
+      onClick={(e) => e.stopPropagation()}
     >
-      <div
-        className="w-full max-w-lg bg-[#FBFBF9] rounded-2xl border border-[#E4E3DC] shadow-xl overflow-hidden flex flex-col max-h-[90vh] animate-fadeIn"
-        onClick={(e) => e.stopPropagation()}
-      >
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-[#E4E3DC] bg-[#F4F3EE]/50">
           <div className="flex items-center gap-2.5">
@@ -202,6 +240,58 @@ export const VaultItemModal: React.FC<VaultItemModalProps> = ({
               placeholder={category === 'Cards' ? 'e.g. Chase Sapphire Reserve' : 'e.g. GitHub Account'}
               className="w-full px-3.5 py-2 rounded-xl bg-[#F4F3EE] border border-[#E4E3DC] text-[#19221C] placeholder-[#8A968F] focus:outline-none focus:border-[#2D4739] focus:bg-[#FBFBF9] transition-all text-xs"
             />
+          </div>
+
+          {/* Group / Folder (Optional) */}
+          <div>
+            <div className="flex items-center justify-between mb-1">
+              <label className="font-medium text-[#19221C]">
+                Group / Folder <span className="text-[#8A968F] font-normal">(Optional)</span>
+              </label>
+              {group && (
+                <button
+                  type="button"
+                  onClick={() => setGroup('')}
+                  className="text-[11px] text-[#8A968F] hover:text-rose-600 transition-colors cursor-pointer"
+                >
+                  Clear
+                </button>
+              )}
+            </div>
+            <div className="relative">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-[#8A968F]">
+                <Folder className="w-3.5 h-3.5" />
+              </div>
+              <input
+                type="text"
+                value={group}
+                onChange={(e) => setGroup(e.target.value)}
+                placeholder="e.g. Banking, Work, Social, Personal..."
+                className="w-full pl-9 pr-3.5 py-2 rounded-xl bg-[#F4F3EE] border border-[#E4E3DC] text-[#19221C] placeholder-[#8A968F] focus:outline-none focus:border-[#2D4739] focus:bg-[#FBFBF9] transition-all text-xs"
+              />
+            </div>
+            {suggestionPills.length > 0 && (
+              <div className="flex flex-wrap items-center gap-1.5 mt-2">
+                <span className="text-[10px] text-[#8A968F] font-medium mr-0.5">Quick select:</span>
+                {suggestionPills.map((sug) => {
+                  const isSelected = group.trim().toLowerCase() === sug.toLowerCase()
+                  return (
+                    <button
+                      key={sug}
+                      type="button"
+                      onClick={() => setGroup(isSelected ? '' : sug)}
+                      className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[11px] transition-colors cursor-pointer ${
+                        isSelected
+                          ? 'bg-[#2D4739] text-[#FBFBF9] font-medium shadow-2xs'
+                          : 'bg-[#ECEAE3] hover:bg-[#E4E3DC] text-[#5C6861] hover:text-[#19221C]'
+                      }`}
+                    >
+                      <span>{isSelected ? '✓' : '+'} {sug}</span>
+                    </button>
+                  )
+                })}
+              </div>
+            )}
           </div>
 
           {/* Fields for Accounts & Passwords */}
@@ -396,6 +486,32 @@ export const VaultItemModal: React.FC<VaultItemModalProps> = ({
           </div>
         </form>
       </div>
+  )
+}
+
+export const VaultItemModal: React.FC<VaultItemModalProps> = ({
+  isOpen,
+  onClose,
+  onSave,
+  initialItem,
+  isLoading = false,
+  existingGroups,
+}) => {
+  if (!isOpen) return null
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/30 backdrop-blur-xs"
+      onClick={onClose}
+    >
+      <VaultItemModalContent
+        key={initialItem?.id || 'new'}
+        onClose={onClose}
+        onSave={onSave}
+        initialItem={initialItem}
+        isLoading={isLoading}
+        existingGroups={existingGroups}
+      />
     </div>
   )
 }

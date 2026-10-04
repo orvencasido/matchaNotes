@@ -22,6 +22,11 @@ import {
   KeyRound,
   X,
   ShieldAlert,
+  Folder,
+  ChevronDown,
+  ChevronRight,
+  ChevronsDown,
+  ChevronsUp,
 } from 'lucide-react'
 import { useVault } from '@/hooks/useVault'
 import { VaultCard } from './VaultCard'
@@ -53,6 +58,7 @@ export const VaultUnlockedView: React.FC = () => {
 
   const [searchQuery, setSearchQuery] = useState('')
   const [activeFilter, setActiveFilter] = useState<FilterOption>('All')
+  const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set())
 
   // Modals state
   const [isItemModalOpen, setIsItemModalOpen] = useState(false)
@@ -100,18 +106,68 @@ export const VaultUnlockedView: React.FC = () => {
         const matchNotes = item.payload.notes?.toLowerCase().includes(query)
         const matchUrl = item.payload.url?.toLowerCase().includes(query)
         const matchCardHolder = item.payload.cardHolder?.toLowerCase().includes(query)
+        const matchGroup = item.payload.group?.toLowerCase().includes(query)
         return (
           matchTitle ||
           Boolean(matchUsername) ||
           Boolean(matchNotes) ||
           Boolean(matchUrl) ||
-          Boolean(matchCardHolder)
+          Boolean(matchCardHolder) ||
+          Boolean(matchGroup)
         )
       }
 
       return true
     })
   }, [items, activeFilter, searchQuery])
+
+  // Group items by group name (defaulting to "General" if not set)
+  const groupedItems = useMemo(() => {
+    const map = new Map<string, DecryptedVaultItem[]>()
+    for (const item of filteredItems) {
+      const groupName = item.payload?.group?.trim() || 'General'
+      const list = map.get(groupName) || []
+      list.push(item)
+      map.set(groupName, list)
+    }
+
+    const sortedKeys = Array.from(map.keys()).sort((a, b) => {
+      if (a === 'General') return 1
+      if (b === 'General') return -1
+      return a.localeCompare(b, undefined, { sensitivity: 'base' })
+    })
+
+    return sortedKeys.map((key) => ({
+      group: key,
+      items: map.get(key)!,
+    }))
+  }, [filteredItems])
+
+  const allGroupNames = useMemo(() => groupedItems.map((g) => g.group), [groupedItems])
+  const isSearching = Boolean(searchQuery.trim())
+
+  const toggleGroupCollapse = (groupName: string) => {
+    setCollapsedGroups((prev) => {
+      const next = new Set(prev)
+      if (next.has(groupName)) {
+        next.delete(groupName)
+      } else {
+        next.add(groupName)
+      }
+      return next
+    })
+  }
+
+  const areAllCollapsed =
+    allGroupNames.length > 0 && allGroupNames.every((name) => collapsedGroups.has(name))
+
+  const handleToggleAllGroups = () => {
+    if (areAllCollapsed) {
+      setCollapsedGroups(new Set())
+    } else {
+      setCollapsedGroups(new Set(allGroupNames))
+    }
+  }
 
   // Count items per category
   const categoryCounts = useMemo(() => {
@@ -166,9 +222,18 @@ export const VaultUnlockedView: React.FC = () => {
     (event: DragEndEvent) => {
       const { active, over } = event
       if (!over || active.id === over.id) return
-      reorderVaultItems(String(active.id), String(over.id), filteredItems)
+
+      const matchingGroup = groupedItems.find(
+        (g) => g.items.some((i) => i.id === active.id) && g.items.some((i) => i.id === over.id)
+      )
+
+      if (matchingGroup) {
+        reorderVaultItems(String(active.id), String(over.id), matchingGroup.items)
+      } else {
+        reorderVaultItems(String(active.id), String(over.id), filteredItems)
+      }
     },
-    [reorderVaultItems, filteredItems]
+    [groupedItems, reorderVaultItems, filteredItems]
   )
 
   return (
@@ -198,6 +263,28 @@ export const VaultUnlockedView: React.FC = () => {
 
         {/* Global Actions */}
         <div className="flex flex-wrap items-center gap-2">
+          {/* Top-level Expand / Collapse All Toggle */}
+          {allGroupNames.length > 0 && (
+            <button
+              type="button"
+              onClick={handleToggleAllGroups}
+              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-[#F4F3EE] hover:bg-[#ECEAE3] text-[#19221C] text-xs font-medium border border-[#E4E3DC] transition-all cursor-pointer shadow-2xs active:scale-95"
+              title={areAllCollapsed ? 'Expand all sections' : 'Collapse all sections'}
+            >
+              {areAllCollapsed ? (
+                <>
+                  <ChevronsDown className="w-3.5 h-3.5 text-[#2D4739]" />
+                  <span>Expand All</span>
+                </>
+              ) : (
+                <>
+                  <ChevronsUp className="w-3.5 h-3.5 text-[#2D4739]" />
+                  <span>Collapse All</span>
+                </>
+              )}
+            </button>
+          )}
+
           {/* Generator Modal Trigger */}
           <button
             type="button"
@@ -260,7 +347,7 @@ export const VaultUnlockedView: React.FC = () => {
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search titles, usernames, notes..."
+            placeholder="Search titles, usernames, notes, groups..."
             className="w-full pl-9 pr-9 py-2 rounded-xl bg-[#F4F3EE] border border-[#E4E3DC] text-[#19221C] placeholder-[#8A968F] focus:outline-none focus:border-[#2D4739] focus:bg-[#FBFBF9] transition-all text-xs"
           />
           {searchQuery && (
@@ -304,28 +391,78 @@ export const VaultUnlockedView: React.FC = () => {
         </div>
       </div>
 
-      {/* Items Grid */}
-      {filteredItems.length > 0 ? (
+      {/* Grouped Items List */}
+      {groupedItems.length > 0 ? (
         <DndContext
           sensors={sensors}
           collisionDetection={closestCenter}
           onDragEnd={handleDragEnd}
         >
-          <SortableContext
-            items={filteredItems.map((i) => i.id)}
-            strategy={rectSortingStrategy}
-          >
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {filteredItems.map((item) => (
-                <VaultCard
-                  key={item.id}
-                  item={item}
-                  onEdit={handleOpenEdit}
-                  onDelete={handleDeleteItem}
-                />
-              ))}
-            </div>
-          </SortableContext>
+          <div className="space-y-5">
+            {groupedItems.map(({ group, items: groupItems }) => {
+              const isCollapsed = !isSearching && collapsedGroups.has(group)
+
+              return (
+                <section
+                  key={group}
+                  className="rounded-2xl border border-[#E4E3DC] bg-[#FBFBF9] shadow-2xs overflow-hidden transition-all duration-200"
+                >
+                  {/* Section Header */}
+                  <button
+                    type="button"
+                    onClick={() => toggleGroupCollapse(group)}
+                    className="w-full flex items-center justify-between px-4 py-3 bg-[#F4F3EE]/70 hover:bg-[#ECEAE3] transition-colors text-left cursor-pointer select-none border-b border-transparent data-[expanded=true]:border-[#E4E3DC]"
+                    data-expanded={!isCollapsed}
+                    aria-expanded={!isCollapsed}
+                  >
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <div className="w-7 h-7 rounded-xl bg-[#E8EFE8] text-[#2D4739] flex items-center justify-center shrink-0">
+                        <Folder className="w-3.5 h-3.5" />
+                      </div>
+                      <span className="text-xs font-semibold text-[#19221C] truncate tracking-tight">
+                        {group}
+                      </span>
+                      <span className="px-2 py-0.5 rounded-full bg-[#E4E3DC] text-[#5C6861] text-[10px] font-mono font-medium shrink-0">
+                        {groupItems.length}
+                      </span>
+                    </div>
+
+                    <div className="flex items-center gap-1.5 text-[#5C6861]">
+                      <span className="text-[11px] font-medium hidden sm:inline">
+                        {isCollapsed ? 'Expand' : 'Collapse'}
+                      </span>
+                      {isCollapsed ? (
+                        <ChevronRight className="w-4 h-4 text-[#5C6861]" />
+                      ) : (
+                        <ChevronDown className="w-4 h-4 text-[#5C6861]" />
+                      )}
+                    </div>
+                  </button>
+
+                  {/* Section Body */}
+                  {!isCollapsed && (
+                    <div className="p-4 bg-[#FBFBF9] animate-fadeIn">
+                      <SortableContext
+                        items={groupItems.map((i) => i.id)}
+                        strategy={rectSortingStrategy}
+                      >
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                          {groupItems.map((item) => (
+                            <VaultCard
+                              key={item.id}
+                              item={item}
+                              onEdit={handleOpenEdit}
+                              onDelete={handleDeleteItem}
+                            />
+                          ))}
+                        </div>
+                      </SortableContext>
+                    </div>
+                  )}
+                </section>
+              )
+            })}
+          </div>
         </DndContext>
       ) : (
         /* Empty State */
@@ -364,6 +501,7 @@ export const VaultUnlockedView: React.FC = () => {
         onSave={handleSaveItem}
         initialItem={editingItem}
         isLoading={isActionLoading}
+        existingGroups={allGroupNames.filter((g) => g !== 'General')}
       />
 
       {/* Dedicated Standalone Password Generator Modal */}

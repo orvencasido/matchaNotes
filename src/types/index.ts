@@ -25,6 +25,7 @@ export interface DecryptedVaultPayload {
   password?: string
   url?: string
   notes?: string
+  group?: string
   // For card items
   cardNumber?: string
   cardHolder?: string
