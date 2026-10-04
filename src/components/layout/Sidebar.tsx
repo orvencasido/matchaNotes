@@ -47,9 +47,8 @@ export const Sidebar: React.FC = () => {
 
   return (
     <aside
-      className={`hidden lg:flex flex-col shrink-0 h-full bg-[#F4F3EE] border-r border-[#E4E3DC] transition-all duration-200 select-none ${
-        isSidebarCollapsed ? 'w-18' : 'w-64'
-      }`}
+      className={`hidden lg:flex flex-col shrink-0 h-full bg-[#F4F3EE] border-r border-[#E4E3DC] transition-all duration-200 select-none ${isSidebarCollapsed ? 'w-18' : 'w-64'
+        }`}
       aria-label="Sidebar navigation"
     >
       {/* Brand Header */}
@@ -64,7 +63,7 @@ export const Sidebar: React.FC = () => {
                 Matcha<span className="text-[#4E6E58] font-normal">Notes</span>
               </span>
               <span className="text-[10px] text-[#5C6861] tracking-wide uppercase font-mono">
-                Personal Archive
+                Orven Casido
               </span>
             </div>
           )}
@@ -97,11 +96,10 @@ export const Sidebar: React.FC = () => {
               key={item.id}
               type="button"
               onClick={() => setActiveView(item.id)}
-              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-xs font-medium transition-all group relative cursor-pointer ${
-                isActive
-                  ? 'bg-[#E8EFE8] text-[#23392D] shadow-xs'
-                  : 'text-[#5C6861] hover:text-[#19221C] hover:bg-[#ECEAE3]/70'
-              }`}
+              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-xs font-medium transition-all group relative cursor-pointer ${isActive
+                ? 'bg-[#E8EFE8] text-[#23392D] shadow-xs'
+                : 'text-[#5C6861] hover:text-[#19221C] hover:bg-[#ECEAE3]/70'
+                }`}
               title={isSidebarCollapsed ? item.label : undefined}
             >
               {/* Active vertical hairline pip */}
@@ -110,9 +108,8 @@ export const Sidebar: React.FC = () => {
               )}
 
               <Icon
-                className={`w-4 h-4 shrink-0 transition-colors ${
-                  isActive ? 'text-[#2D4739]' : 'text-[#5C6861] group-hover:text-[#19221C]'
-                }`}
+                className={`w-4 h-4 shrink-0 transition-colors ${isActive ? 'text-[#2D4739]' : 'text-[#5C6861] group-hover:text-[#19221C]'
+                  }`}
               />
 
               {!isSidebarCollapsed && (
@@ -120,11 +117,10 @@ export const Sidebar: React.FC = () => {
                   <span className="truncate">{item.label}</span>
                   {item.badge && (
                     <span
-                      className={`inline-flex items-center gap-1 text-[10px] font-mono px-1.5 py-0.5 rounded border ${
-                        isActive
-                          ? 'border-[#2D4739]/20 bg-[#2D4739]/10 text-[#23392D]'
-                          : 'border-[#E4E3DC] bg-[#FBFBF9] text-[#5C6861]'
-                      }`}
+                      className={`inline-flex items-center gap-1 text-[10px] font-mono px-1.5 py-0.5 rounded border ${isActive
+                        ? 'border-[#2D4739]/20 bg-[#2D4739]/10 text-[#23392D]'
+                        : 'border-[#E4E3DC] bg-[#FBFBF9] text-[#5C6861]'
+                        }`}
                     >
                       <Lock className="w-2.5 h-2.5" />
                       {item.badge}
@@ -140,9 +136,8 @@ export const Sidebar: React.FC = () => {
       {/* User Profile Footer */}
       <div className="p-3 border-t border-[#E4E3DC]/70 bg-[#F4F3EE]">
         <div
-          className={`flex items-center gap-2.5 ${
-            isSidebarCollapsed ? 'justify-center flex-col' : 'justify-between'
-          }`}
+          className={`flex items-center gap-2.5 ${isSidebarCollapsed ? 'justify-center flex-col' : 'justify-between'
+            }`}
         >
           <div className="flex items-center gap-2.5 min-w-0">
             <div
