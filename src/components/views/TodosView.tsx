@@ -322,7 +322,7 @@ export const TodosView: React.FC = () => {
             type="text"
             value={newText}
             onChange={(e) => setNewText(e.target.value)}
-            placeholder="+ Add a task... (Press Enter to save)"
+            placeholder="Add a Task"
             className="flex-1 bg-transparent text-sm text-[#19221C] placeholder:text-[#8A968F] outline-none"
           />
           <button

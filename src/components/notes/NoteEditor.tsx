@@ -552,7 +552,7 @@ export const NoteEditor: React.FC<NoteEditorProps> = ({
               value={content}
               onChange={(e) => handleContentChange(e.target.value)}
               onKeyDown={handleKeyDown}
-              placeholder="Write your note here... Use - [ ] for checklists, # for headings."
+              placeholder="Write your Notes here... "
               rows={16}
               className="w-full bg-transparent text-sm text-[#19221C] placeholder:text-[#8A968F]/60 border-none outline-none resize-none leading-relaxed font-sans"
             />
